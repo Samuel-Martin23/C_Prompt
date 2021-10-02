@@ -1,0 +1,10 @@
+*
+!*.*
+!*/
+!**/Makefile
+
+.vscode/
+*.DS_Store
+*.o
+*.dylib
+*.a
