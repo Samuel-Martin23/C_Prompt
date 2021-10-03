@@ -57,6 +57,32 @@ static size_t prase_double(va_list args)
     return size;
 }
 
+static size_t parse_short(va_list args)
+{
+    size_t size = 0;
+    long number = 0;
+    char input[7];
+    short *arg_value = va_arg(args, short*);
+
+    size = parse_prompt(input, sizeof(input), true);
+    number = strtol(input, 0, 10);
+
+    if (number < SHRT_MIN)
+    {
+        *arg_value = SHRT_MIN;
+    }
+    else if (number > SHRT_MAX)
+    {
+        *arg_value = SHRT_MAX;
+    }
+    else
+    {
+        *arg_value = (short)number;
+    }
+
+    return size;
+}
+
 static size_t prase_float(va_list args)
 {
     size_t size = 0;
@@ -101,7 +127,7 @@ static size_t parse_char(va_list args)
     char *arg_value = va_arg(args, char*);
     size_t size = 0;
 
-    size = parse_prompt(input, sizeof(input), true);
+    size = parse_prompt(input, sizeof(input), false);
     *arg_value = input[0];
 
     return size;
@@ -135,6 +161,10 @@ size_t prompt(const char *message, const char *format, ...)
     else if (!(strncmp(specifier, "f", MAX_FORMAT)))
     {
         size = prase_float(args);
+    }
+    else if (!(strncmp(specifier, "hi", MAX_FORMAT)))
+    {
+        size = parse_short(args);
     }
     else if (!(strncmp(specifier, "lf", MAX_FORMAT)))
     {
