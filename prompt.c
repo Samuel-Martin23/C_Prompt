@@ -48,7 +48,7 @@ static size_t parse_str(va_list args)
 static size_t prase_double(va_list args)
 {
     size_t size = 0;
-    char input[21];
+    char input[21] = {0};
     double *arg_value = va_arg(args, double*);
 
     size = parse_prompt(input, sizeof(input));
@@ -61,7 +61,7 @@ static size_t parse_short(va_list args)
 {
     size_t size = 0;
     long number = 0;
-    char input[7];
+    char input[7] = {0};
     short *arg_value = va_arg(args, short*);
 
     size = parse_prompt(input, sizeof(input));
@@ -86,7 +86,7 @@ static size_t parse_short(va_list args)
 static size_t prase_float(va_list args)
 {
     size_t size = 0;
-    char input[12];
+    char input[12] = {0};
     float *arg_value = va_arg(args, float*);
 
     size = parse_prompt(input, sizeof(input));
@@ -99,7 +99,7 @@ static size_t parse_int(va_list args)
 {
     size_t size = 0;
     long number = 0;
-    char input[12];
+    char input[12] = {0};
     int *arg_value = va_arg(args, int*);
 
     size = parse_prompt(input, sizeof(input));
@@ -123,7 +123,7 @@ static size_t parse_int(va_list args)
 
 static size_t parse_char(va_list args)
 {
-    char input[2];
+    char input[2] = {0};
     char *arg_value = va_arg(args, char*);
     size_t size = 0;
 
