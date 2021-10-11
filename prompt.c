@@ -7,7 +7,7 @@ static bool is_valid_str(const char *data)
     return ((data != NULL) && (data[0] != '\0'));
 }
 
-static size_t parse_prompt(char *input, const size_t MAX_SIZE, bool stop_at_space)
+static size_t parse_prompt(char *input, const size_t MAX_SIZE)
 {
     int ch = 0;
     size_t i = 0;
@@ -16,7 +16,7 @@ static size_t parse_prompt(char *input, const size_t MAX_SIZE, bool stop_at_spac
     {
         ch = getchar();
 
-        if (ch == '\n' || ch == EOF || (ch == ' ' && stop_at_space))
+        if (ch == '\n' || ch == EOF)
         {
             break;
         }
@@ -39,7 +39,7 @@ static size_t parse_str(va_list args)
 
     if (MAX_STR_SIZE != 0)
     {
-        size = parse_prompt(input, MAX_STR_SIZE, false);
+        size = parse_prompt(input, MAX_STR_SIZE);
     }
 
     return size;
@@ -51,7 +51,7 @@ static size_t prase_double(va_list args)
     char input[21];
     double *arg_value = va_arg(args, double*);
 
-    size = parse_prompt(input, sizeof(input), true);
+    size = parse_prompt(input, sizeof(input));
     *arg_value = strtod(input, NULL);
 
     return size;
@@ -64,7 +64,7 @@ static size_t parse_short(va_list args)
     char input[7];
     short *arg_value = va_arg(args, short*);
 
-    size = parse_prompt(input, sizeof(input), true);
+    size = parse_prompt(input, sizeof(input));
     number = strtol(input, 0, 10);
 
     if (number < SHRT_MIN)
@@ -89,7 +89,7 @@ static size_t prase_float(va_list args)
     char input[12];
     float *arg_value = va_arg(args, float*);
 
-    size = parse_prompt(input, sizeof(input), true);
+    size = parse_prompt(input, sizeof(input));
     *arg_value = strtof(input, NULL);
 
     return size;
@@ -102,7 +102,7 @@ static size_t parse_int(va_list args)
     char input[12];
     int *arg_value = va_arg(args, int*);
 
-    size = parse_prompt(input, sizeof(input), true);
+    size = parse_prompt(input, sizeof(input));
     number = strtol(input, 0, 10);
 
     if (number < INT32_MIN)
@@ -127,7 +127,7 @@ static size_t parse_char(va_list args)
     char *arg_value = va_arg(args, char*);
     size_t size = 0;
 
-    size = parse_prompt(input, sizeof(input), false);
+    size = parse_prompt(input, sizeof(input));
     *arg_value = input[0];
 
     return size;
