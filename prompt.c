@@ -2,21 +2,15 @@
 
 #define MAX_FORMAT                  3
 
-static bool is_valid_str(const char *data)
-{
-    return ((data != NULL) && (data[0] != '\0'));
-}
-
 static size_t parse_prompt(char *input, const size_t MAX_SIZE, bool stop_at_space)
 {
-    int ch = 0;
     size_t i = 0;
+    int ch = getchar();
 
-    do
+    while (ch == '\n')
     {
         ch = getchar();
-    } 
-    while (ch == '\n');
+    }
 
     while (true)
     {
@@ -174,31 +168,22 @@ size_t prompt(const char *message, const char *format, ...)
     printf("%s", message);
 
     size_t size = 0;
-    char *specifier = "";
     char *format_alloc = strdup(format);
     char *format_copy = format_alloc;
+    char *specifier = strsep(&format_copy, "%");
 
     va_list args;
     va_start(args, format);
 
-    while (!(is_valid_str(specifier)))
-    {
-        specifier = strsep(&format_copy, "%");
-    }
-
-    // Single specifier.
-    size = parse_format(args, specifier, (format_copy != NULL));
-
-    // Multiple specifiers.
     while (format_copy != NULL)
     {
         specifier = strsep(&format_copy, "%");
         size += parse_format(args, specifier, (format_copy != NULL));
     }
 
-    free(format_alloc);
-
     va_end(args);
+
+    free(format_alloc);
 
     return size;
 }
