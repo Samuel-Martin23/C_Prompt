@@ -3,13 +3,18 @@
 int main()
 {
     int age = 0;
-    char first_name[20];
+    char name[50];
+    float height = 0.0f;
+    float weight = 0.0f;
 
-    prompt("Enter name: ", "%s", first_name, sizeof(first_name));
+    prompt("Enter name: ", "%s", name, sizeof(name));
     prompt("Enter age: ", "%d", &age);
+    prompt("Enter height followed by weight: ", "%f%f", &height, &weight);
 
-    printf("%s\n", first_name);
-    printf("%d\n", age);
+    printf("\nName: %s\n", name);
+    printf("Age: %d\n", age);
+    printf("Height: %.4f\n", height);
+    printf("Weight: %.4f\n", weight);
 
     return 0;
 }
