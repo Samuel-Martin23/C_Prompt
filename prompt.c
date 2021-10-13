@@ -71,7 +71,7 @@ static size_t parse_short(va_list args, bool stop_at_space)
     short *arg_value = va_arg(args, short*);
 
     size = parse_prompt(input, sizeof(input), stop_at_space);
-    number = strtol(input, 0, 10);
+    number = strtol(input, NULL, 10);
 
     if (number < SHRT_MIN)
     {
@@ -109,7 +109,7 @@ static size_t parse_int(va_list args, bool stop_at_space)
     int *arg_value = va_arg(args, int*);
 
     size = parse_prompt(input, sizeof(input), stop_at_space);
-    number = strtol(input, 0, 10);
+    number = strtol(input, NULL, 10);
 
     if (number < INT32_MIN)
     {
