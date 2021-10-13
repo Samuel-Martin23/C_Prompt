@@ -139,7 +139,7 @@ static size_t parse_char(va_list args, bool stop_at_space)
     return size;
 }
 
-size_t parse_format(va_list args, char *specifier, bool stop_at_space)
+static size_t parse_format(va_list args, char *specifier, bool stop_at_space)
 {
     if (!(strncmp(specifier, "c", MAX_FORMAT)))
     {
