@@ -10,7 +10,7 @@ static size_t parse_prompt(char *input, const size_t MAX_SIZE, unsigned char par
 {
     size_t i = 0;
     int ch = getchar();
-    bool continue_read = true;
+    bool continue_reading = true;
 
     while (ch == '\n' || ch == ' ')
     {
@@ -23,11 +23,11 @@ static size_t parse_prompt(char *input, const size_t MAX_SIZE, unsigned char par
         {
             break;
         }
-        else if (continue_read)
+        else if (continue_reading)
         {
             if ((ch == ' ' && !(parse_opt & MULTPLE_SPECIFIERS) && (parse_opt & STOP_AT_SPACE)) || ch == delim)
             {
-                continue_read = false;
+                continue_reading = false;
             }
             else if (i < (MAX_SIZE - 1))
             {
