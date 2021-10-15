@@ -1,11 +1,16 @@
 #include "prompt.h"
 
-#define MAX_FORMAT                  3
+#define MAX_FORMAT                  3u
 
-static size_t parse_prompt(char *input, const size_t MAX_SIZE, bool stop_at_space)
+#define NO_PARSE_OPT                0u
+#define MULTPLE_SPECIFIERS          1u
+#define NO_GETLINE                  2u
+
+static size_t parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse_opt)
 {
     size_t i = 0;
     int ch = getchar();
+    bool no_space = true;
 
     while (ch == '\n')
     {
@@ -14,13 +19,20 @@ static size_t parse_prompt(char *input, const size_t MAX_SIZE, bool stop_at_spac
 
     while (true)
     {
-        if (ch == '\n' || ch == EOF || (ch == ' ' && stop_at_space))
+        if (ch == '\n' || ch == EOF || (ch == ' ' && (parse_opt & MULTPLE_SPECIFIERS)))
         {
             break;
         }
-        else if (i < (MAX_SIZE - 1))
+        else if (no_space)
         {
-            input[i++] = (char)ch;
+            if (ch == ' ' && !(parse_opt & MULTPLE_SPECIFIERS) && (parse_opt & NO_GETLINE))
+            {
+                no_space = false;
+            }
+            else if (i < (MAX_SIZE - 1))
+            {
+                input[i++] = (char)ch;
+            }
         }
 
         ch = getchar();
@@ -31,40 +43,39 @@ static size_t parse_prompt(char *input, const size_t MAX_SIZE, bool stop_at_spac
     return i;
 }
 
-static size_t parse_str(va_list args, bool stop_at_space)
+static size_t parse_str(va_list args, bool multple_specifiers)
 {
-    size_t size = 0;
     char *input = va_arg(args, char*);
     const size_t MAX_STR_SIZE = va_arg(args, size_t);
 
     if (MAX_STR_SIZE != 0)
     {
-        size = parse_prompt(input, MAX_STR_SIZE, stop_at_space);
+        return parse_prompt(input, MAX_STR_SIZE, (multple_specifiers | NO_GETLINE));
     }
 
-    return size;
+    return 0;
 }
 
-static size_t prase_double(va_list args, bool stop_at_space)
+static size_t prase_double(va_list args, bool multple_specifiers)
 {
     size_t size = 0;
     char input[21] = {0};
     double *arg_value = va_arg(args, double*);
 
-    size = parse_prompt(input, sizeof(input), stop_at_space);
+    size = parse_prompt(input, sizeof(input), (multple_specifiers | NO_GETLINE));
     *arg_value = strtod(input, NULL);
 
     return size;
 }
 
-static size_t parse_short(va_list args, bool stop_at_space)
+static size_t parse_short(va_list args, bool multple_specifiers)
 {
     size_t size = 0;
     long number = 0;
     char input[7] = {0};
     short *arg_value = va_arg(args, short*);
 
-    size = parse_prompt(input, sizeof(input), stop_at_space);
+    size = parse_prompt(input, sizeof(input), (multple_specifiers | NO_GETLINE));
     number = strtol(input, NULL, 10);
 
     if (number < SHRT_MIN)
@@ -83,26 +94,26 @@ static size_t parse_short(va_list args, bool stop_at_space)
     return size;
 }
 
-static size_t prase_float(va_list args, bool stop_at_space)
+static size_t prase_float(va_list args, bool multple_specifiers)
 {
     size_t size = 0;
     char input[12] = {0};
     float *arg_value = va_arg(args, float*);
 
-    size = parse_prompt(input, sizeof(input), stop_at_space);
+    size = parse_prompt(input, sizeof(input), (multple_specifiers | NO_GETLINE));
     *arg_value = strtof(input, NULL);
 
     return size;
 }
 
-static size_t parse_int(va_list args, bool stop_at_space)
+static size_t parse_int(va_list args, bool multple_specifiers)
 {
     size_t size = 0;
     long number = 0;
     char input[12] = {0};
     int *arg_value = va_arg(args, int*);
 
-    size = parse_prompt(input, sizeof(input), stop_at_space);
+    size = parse_prompt(input, sizeof(input), (multple_specifiers | NO_GETLINE));
     number = strtol(input, NULL, 10);
 
     if (number < INT32_MIN)
@@ -121,43 +132,55 @@ static size_t parse_int(va_list args, bool stop_at_space)
     return size;
 }
 
-static size_t parse_char(va_list args, bool stop_at_space)
+static size_t parse_char(va_list args, bool multple_specifiers)
 {
     char input[2] = {0};
     char *arg_value = va_arg(args, char*);
     size_t size = 0;
 
-    size = parse_prompt(input, sizeof(input), stop_at_space);
+    size = parse_prompt(input, sizeof(input), (multple_specifiers | NO_GETLINE));
     *arg_value = input[0];
 
     return size;
 }
 
-static size_t parse_format(va_list args, char *specifier, bool stop_at_space)
+static size_t parse_format(va_list args, char *specifier, bool multple_specifiers)
 {
     if (!(strncmp(specifier, "c", MAX_FORMAT)))
     {
-        return parse_char(args, stop_at_space);
+        return parse_char(args, multple_specifiers);
     }
     else if (!(strncmp(specifier, "d", MAX_FORMAT)))
     {
-        return parse_int(args, stop_at_space);
+        return parse_int(args, multple_specifiers);
     }
     else if (!(strncmp(specifier, "f", MAX_FORMAT)))
     {
-        return prase_float(args, stop_at_space);
+        return prase_float(args, multple_specifiers);
     }
     else if (!(strncmp(specifier, "hi", MAX_FORMAT)))
     {
-        return parse_short(args, stop_at_space);
+        return parse_short(args, multple_specifiers);
     }
     else if (!(strncmp(specifier, "lf", MAX_FORMAT)))
     {
-        return prase_double(args, stop_at_space);
+        return prase_double(args, multple_specifiers);
     }
     else if (!(strncmp(specifier, "s", MAX_FORMAT)))
     {
-        return parse_str(args, stop_at_space);
+        return parse_str(args, multple_specifiers);
+    }
+
+    return 0;
+}
+
+size_t prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE)
+{
+    printf("%s", message);
+
+    if (MAX_STR_SIZE != 0)
+    {
+        return parse_prompt(input, MAX_STR_SIZE, NO_PARSE_OPT);
     }
 
     return 0;
