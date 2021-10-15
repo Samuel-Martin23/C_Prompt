@@ -4,7 +4,7 @@
 
 #define NO_PARSE_OPT                0u
 #define MULTPLE_SPECIFIERS          1u
-#define NO_GETLINE                  2u
+#define STOP_AT_SPACE               2u
 
 static size_t parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse_opt, char delim)
 {
@@ -12,7 +12,7 @@ static size_t parse_prompt(char *input, const size_t MAX_SIZE, unsigned char par
     int ch = getchar();
     bool continue_read = true;
 
-    while (ch == '\n')
+    while (ch == '\n' || ch == ' ')
     {
         ch = getchar();
     }
@@ -25,7 +25,7 @@ static size_t parse_prompt(char *input, const size_t MAX_SIZE, unsigned char par
         }
         else if (continue_read)
         {
-            if ((ch == ' ' && !(parse_opt & MULTPLE_SPECIFIERS) && (parse_opt & NO_GETLINE)) || ch == delim)
+            if ((ch == ' ' && !(parse_opt & MULTPLE_SPECIFIERS) && (parse_opt & STOP_AT_SPACE)) || ch == delim)
             {
                 continue_read = false;
             }
@@ -50,7 +50,7 @@ static size_t parse_str(va_list args, bool multple_specifiers)
 
     if (MAX_STR_SIZE != 0)
     {
-        return parse_prompt(input, MAX_STR_SIZE, (multple_specifiers | NO_GETLINE), '\0');
+        return parse_prompt(input, MAX_STR_SIZE, (multple_specifiers | STOP_AT_SPACE), '\0');
     }
 
     return 0;
@@ -62,7 +62,7 @@ static size_t prase_double(va_list args, bool multple_specifiers)
     char input[21] = {0};
     double *arg_value = va_arg(args, double*);
 
-    size = parse_prompt(input, sizeof(input), (multple_specifiers | NO_GETLINE), '\0');
+    size = parse_prompt(input, sizeof(input), (multple_specifiers | STOP_AT_SPACE), '\0');
     *arg_value = strtod(input, NULL);
 
     return size;
@@ -75,7 +75,7 @@ static size_t parse_short(va_list args, bool multple_specifiers)
     char input[7] = {0};
     short *arg_value = va_arg(args, short*);
 
-    size = parse_prompt(input, sizeof(input), (multple_specifiers | NO_GETLINE), '\0');
+    size = parse_prompt(input, sizeof(input), (multple_specifiers | STOP_AT_SPACE), '\0');
     number = strtol(input, NULL, 10);
 
     if (number < SHRT_MIN)
@@ -100,7 +100,7 @@ static size_t prase_float(va_list args, bool multple_specifiers)
     char input[12] = {0};
     float *arg_value = va_arg(args, float*);
 
-    size = parse_prompt(input, sizeof(input), (multple_specifiers | NO_GETLINE), '\0');
+    size = parse_prompt(input, sizeof(input), (multple_specifiers | STOP_AT_SPACE), '\0');
     *arg_value = strtof(input, NULL);
 
     return size;
@@ -113,7 +113,7 @@ static size_t parse_int(va_list args, bool multple_specifiers)
     char input[12] = {0};
     int *arg_value = va_arg(args, int*);
 
-    size = parse_prompt(input, sizeof(input), (multple_specifiers | NO_GETLINE), '\0');
+    size = parse_prompt(input, sizeof(input), (multple_specifiers | STOP_AT_SPACE), '\0');
     number = strtol(input, NULL, 10);
 
     if (number < INT32_MIN)
@@ -138,7 +138,7 @@ static size_t parse_char(va_list args, bool multple_specifiers)
     char *arg_value = va_arg(args, char*);
     size_t size = 0;
 
-    size = parse_prompt(input, sizeof(input), (multple_specifiers | NO_GETLINE), '\0');
+    size = parse_prompt(input, sizeof(input), (multple_specifiers | STOP_AT_SPACE), '\0');
     *arg_value = input[0];
 
     return size;
