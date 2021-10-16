@@ -25,7 +25,7 @@ static size_t parse_prompt(char *input, const size_t MAX_SIZE, unsigned char par
         }
         else if (continue_reading)
         {
-            if ((ch == ' ' && !(parse_opt & MULTPLE_SPECIFIERS) && (parse_opt & STOP_AT_SPACE)) || ch == delim)
+            if ((ch == ' ' && (parse_opt & STOP_AT_SPACE)) || ch == delim)
             {
                 continue_reading = false;
             }
