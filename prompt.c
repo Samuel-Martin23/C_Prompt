@@ -233,7 +233,7 @@ static size_t parse_int(va_list args, bool multple_specifiers)
     char input[MAX_READ_INT] = {0};
     int *arg_value = va_arg(args, int*);
 
-    size = parse_prompt(input, MAX_READ_INT, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), '\0', true);
+    size = parse_prompt(input, MAX_READ_INT, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true);
     number = strtol(input, NULL, 10);
 
     if (number < INT32_MIN)
