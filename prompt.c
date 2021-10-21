@@ -451,12 +451,12 @@ int prompt(const char *message, const char *format, ...)
         specifier = strsep(&format_copy, "%");
         result = parse_format(&args, specifier, (format_copy != NULL));
 
-        if (result == EOF)
+        if (result == EOF || result == 0)
         {
             va_end(args);
             free(format_alloc);
 
-            return EOF;
+            return (result == 0) ? successfully_read : EOF;
         }
 
         successfully_read += result;
