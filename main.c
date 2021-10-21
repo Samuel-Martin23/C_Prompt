@@ -13,7 +13,7 @@ int main()
     prompt("Enter favorite color: ", "%s", color, sizeof(color));
     prompt("Enter age: ", "%d", &age);
     prompt("Enter height followed by weight: ", "%f%f", &height, &weight);
-    prompt_getline_delim("Enter Movie: ", movie, sizeof(movie), 's');
+    prompt_getline_delim("Enter Movie: ", movie, sizeof(movie), "s", true);
 
     printf("\nName: %s\n", name);
     printf("Color: %s\n", color);
