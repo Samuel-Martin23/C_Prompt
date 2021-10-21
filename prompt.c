@@ -118,10 +118,8 @@ static int parse_str(va_list *args, bool multple_specifiers)
         {
             return EOF;
         }
-        else if (input[0] != '\0')
-        {
-            return 1;
-        }
+
+        return 1;
     }
 
     return 0;
@@ -401,10 +399,8 @@ int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_
         {
             return EOF;
         }
-        else if (input[0] != '\0')
-        {
-            return 1;
-        }
+
+        return 1;
     }
 
     return 0;
@@ -424,10 +420,8 @@ int prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE)
         {
             return EOF;
         }
-        else if (input[0] != '\0')
-        {
-            return 1;
-        }
+
+        return 1;
     }
 
     return 0;
