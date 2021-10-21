@@ -5,22 +5,7 @@
 #define USHRT_MIN                   -((long)USHRT_MAX) - 1
 #define UINT32_MIN                  -((long)UINT32_MAX) - 1
 
-#define MAX_READ_CHAR               2u
-#define MAX_READ_SHORT              8u
-#define MAX_READ_INT                13u
-#define MAX_READ_FLOAT              60u
-#define MAX_READ_LONG               22u
-#define MAX_READ_ULONG              23u
-#define MAX_READ_DOUBLE             329u
-
-#define MAX_NEG_SHORT               (MAX_READ_SHORT - 2u)
-#define MAX_POS_SHORT               (MAX_READ_SHORT - 3u)
-#define MAX_NEG_INT                 (MAX_READ_INT - 2u)
-#define MAX_POS_INT                 (MAX_READ_INT - 3u)
-#define MAX_NEG_LONG                (MAX_READ_LONG - 2u)
-#define MAX_POS_LONG                (MAX_READ_LONG - 3u)
-#define MAX_POS_ULONG               (MAX_READ_ULONG - 3u)
-
+#define MAX_READ                    1080u
 #define MAX_FORMAT                  2u
 
 #define NO_PARSE_OPT                0u
@@ -30,22 +15,7 @@
 
 #define strchr_bool(s, c)           (bool)(strchr(s, c))
 
-static size_t get_unsigned_size(size_t value)
-{
-    // I really hate doing this but I can't think of a way
-    // to get the size after.
-    size_t count = 0;
-
-    while (value != 0)
-    {
-        value /= 10;
-        count++;
-    }
-
-    return count;
-}
-
-static size_t parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse_opt, char *delim, bool matched_delim)
+static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse_opt, char *delim, bool matched_delim, bool *is_eof)
 {
     size_t i = 0;
     int ch = getchar();
@@ -60,6 +30,11 @@ static size_t parse_prompt(char *input, const size_t MAX_SIZE, unsigned char par
     {
         if (ch == '\n' || ch == EOF || ((parse_opt & MULTIPLE_SPECIFIERS) && ch == ' '))
         {
+            if (ch == EOF && is_eof != NULL)
+            {
+                *is_eof = true;
+            }
+
             break;
         }
         else if (continue_reading)
@@ -80,190 +55,276 @@ static size_t parse_prompt(char *input, const size_t MAX_SIZE, unsigned char par
     }
 
     input[i] = '\0';
-
-    return i;
 }
 
-static size_t parse_uint(va_list args, bool multple_specifiers)
+static int parse_uint(va_list args, bool multple_specifiers)
 {
-    size_t size = 0;
     long number = 0;
-    char input[MAX_READ_INT] = {0};
+    bool is_eof = false;
+    char input[MAX_READ] = {0};
     unsigned int *arg_value = va_arg(args, unsigned int*);
 
-    size = parse_prompt(input, MAX_READ_INT, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+
+    if (is_eof)
+    {
+        return EOF;
+    }
+    else if (input[0] == '\0')
+    {
+        return 0;
+    }
+
     number = strtol(input, NULL, 10);
 
     if (number > UINT32_MAX || number <= UINT32_MIN)
     {
         *arg_value = UINT32_MAX;
-        return MAX_POS_INT;
     }
 
     *arg_value = (unsigned int)number;
-    return (input[0] == '-') ? get_unsigned_size((size_t)*arg_value) : size;
+
+    return 1;
 }
 
-static size_t parse_str(va_list args, bool multple_specifiers)
+static int parse_str(va_list args, bool multple_specifiers)
 {
+    bool is_eof = false;
     char *input = va_arg(args, char*);
     const size_t MAX_STR_SIZE = va_arg(args, size_t);
 
     if (MAX_STR_SIZE != 0)
     {
-        return parse_prompt(input, MAX_STR_SIZE, (multple_specifiers | STOP_AT_SPACE), "\0", true);
+        parse_prompt(input, MAX_STR_SIZE, (multple_specifiers | STOP_AT_SPACE), "\0", true, &is_eof);
+
+        if (is_eof)
+        {
+            return EOF;
+        }
+        else if (input[0] != '\0')
+        {
+            return 1;
+        }
     }
 
     return 0;
 }
 
-static size_t parse_ulong(va_list args, bool multple_specifiers)
+static int parse_ulong(va_list args, bool multple_specifiers)
 {
-    size_t size = 0;
-    char input[MAX_READ_ULONG] = {0};
+    bool is_eof = false;
+    char input[MAX_READ] = {0};
     unsigned long *arg_value = va_arg(args, unsigned long*);
 
-    errno = 0;
-    size = parse_prompt(input, MAX_READ_ULONG, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+
+    if (is_eof)
+    {
+        return EOF;
+    }
+    else if (input[0] == '\0')
+    {
+        return 0;
+    }
+
     *arg_value = strtoul(input, NULL, 10);
 
-    if (errno == ERANGE && *arg_value == ULONG_MAX)
-    {
-        return MAX_POS_ULONG;
-    }
-
-    return (input[0] == '-') ? get_unsigned_size(*arg_value) : size;
+    return 1;
 }
 
-static size_t parse_double(va_list args, bool multple_specifiers)
+static int parse_double(va_list args, bool multple_specifiers)
 {
-    size_t size = 0;
-    char input[MAX_READ_DOUBLE] = {0};
+    bool is_eof = false;
+    char input[MAX_READ] = {0};
     double *arg_value = va_arg(args, double*);
 
-    size = parse_prompt(input, MAX_READ_DOUBLE, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+
+    if (is_eof)
+    {
+        return EOF;
+    }
+    else if (input[0] == '\0')
+    {
+        return 0;
+    }
+
     *arg_value = strtod(input, NULL);
 
-    return size;
+    return 1;
 }
 
-static size_t parse_long(va_list args, bool multple_specifiers)
+static int parse_long(va_list args, bool multple_specifiers)
 {
-    size_t size = 0;
-    char input[MAX_READ_LONG] = {0};
+    bool is_eof = false;
+    char input[MAX_READ] = {0};
     long *arg_value = va_arg(args, long*);
 
-    errno = 0;
-    size = parse_prompt(input, MAX_READ_LONG, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+
+    if (is_eof)
+    {
+        return EOF;
+    }
+    else if (input[0] == '\0')
+    {
+        return 0;
+    }
+
     *arg_value = strtol(input, NULL, 10);
 
-    if (errno == ERANGE && *arg_value == LONG_MIN)
-    {
-        return MAX_NEG_LONG;
-    }
-    else if (errno == ERANGE && *arg_value == LONG_MAX)
-    {
-        return MAX_POS_LONG;
-    } 
-
-    return size;
+    return 1;
 }
 
-static size_t parse_ushort(va_list args, bool multple_specifiers)
+static int parse_ushort(va_list args, bool multple_specifiers)
 {
-    size_t size = 0;
     long number = 0;
-    char input[MAX_READ_SHORT] = {0};
+    bool is_eof = false;
+    char input[MAX_READ] = {0};
     unsigned short *arg_value = va_arg(args, unsigned short*);
 
-    size = parse_prompt(input, MAX_READ_SHORT, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+
+    if (is_eof)
+    {
+        return EOF;
+    }
+    else if (input[0] == '\0')
+    {
+        return 0;
+    }
+
     number = strtol(input, NULL, 10);
 
     if (number > USHRT_MAX || number <= USHRT_MIN)
     {
         *arg_value = USHRT_MAX;
-        return MAX_POS_SHORT;
+    }
+    else
+    {
+        *arg_value = (unsigned short)number;
     }
 
-    *arg_value = (unsigned short)number;
-    return (input[0] == '-') ? get_unsigned_size((size_t)*arg_value) : size;
+    return 1;
 }
 
-static size_t parse_short(va_list args, bool multple_specifiers)
+static int parse_short(va_list args, bool multple_specifiers)
 {
-    size_t size = 0;
     long number = 0;
-    char input[MAX_READ_SHORT] = {0};
+    bool is_eof = false;
+    char input[MAX_READ] = {0};
     short *arg_value = va_arg(args, short*);
 
-    size = parse_prompt(input, MAX_READ_SHORT, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+
+    if (is_eof)
+    {
+        return EOF;
+    }
+    else if (input[0] == '\0')
+    {
+        return 0;
+    }
+
     number = strtol(input, NULL, 10);
 
     if (number < SHRT_MIN)
     {
         *arg_value = SHRT_MIN;
-        return MAX_NEG_SHORT;
     }
     else if (number > SHRT_MAX)
     {
         *arg_value = SHRT_MAX;
-        return MAX_POS_SHORT;
+    }
+    else
+    {
+        *arg_value = (short)number;
     }
 
-    *arg_value = (short)number;
-    return size;
+    return 1;
 }
 
-static size_t parse_float(va_list args, bool multple_specifiers)
+static int parse_float(va_list args, bool multple_specifiers)
 {
-    size_t size = 0;
-    char input[MAX_READ_FLOAT] = {0};
+    bool is_eof = false;
+    char input[MAX_READ] = {0};
     float *arg_value = va_arg(args, float*);
 
-    size = parse_prompt(input, MAX_READ_FLOAT, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+
+    if (is_eof)
+    {
+        return EOF;
+    }
+    else if (input[0] == '\0')
+    {
+        return 0;
+    }
+
     *arg_value = strtof(input, NULL);
 
-    return size;
+    return 1;
 }
 
-static size_t parse_int(va_list args, bool multple_specifiers)
+static int parse_int(va_list args, bool multple_specifiers)
 {
-    size_t size = 0;
     long number = 0;
-    char input[MAX_READ_INT] = {0};
+    bool is_eof = false;
+    char input[MAX_READ] = {0};
     int *arg_value = va_arg(args, int*);
 
-    size = parse_prompt(input, MAX_READ_INT, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+
+    if (is_eof)
+    {
+        return EOF;
+    }
+    else if (input[0] == '\0')
+    {
+        return 0;
+    }
+
     number = strtol(input, NULL, 10);
 
     if (number < INT32_MIN)
     {
         *arg_value = INT32_MIN;
-        return MAX_NEG_INT;
     }
     else if (number > INT32_MAX)
     {
         *arg_value = INT32_MAX;
-        return MAX_POS_INT;
+    }
+    else
+    {
+        *arg_value = (int)number;
     }
 
-    *arg_value = (int)number;
-    return size;
+    return 1;
 }
 
-static size_t parse_char(va_list args, bool multple_specifiers)
+static int parse_char(va_list args, bool multple_specifiers)
 {
-    char input[MAX_READ_CHAR] = {0};
+    bool is_eof = false;
+    char input[MAX_READ] = {0};
     char *arg_value = va_arg(args, char*);
-    size_t size = 0;
 
-    size = parse_prompt(input, MAX_READ_CHAR, (multple_specifiers | STOP_AT_SPACE), "\0", true);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE), "\0", true, &is_eof);
+
+    if (is_eof)
+    {
+        return EOF;
+    }
+    else if (input[0] == '\0')
+    {
+        return 0;
+    }
+
     *arg_value = input[0];
 
-    return size;
+    return 1;
 }
 
-static size_t parse_format(va_list args, char *specifier, bool multple_specifiers)
+static int parse_format(va_list args, char *specifier, bool multple_specifiers)
 {
     if (!(strncmp(specifier, "c", MAX_FORMAT)))
     {
@@ -309,35 +370,58 @@ static size_t parse_format(va_list args, char *specifier, bool multple_specifier
     return 0;
 }
 
-size_t prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, char *delim, bool matched_delim)
+int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, char *delim, bool matched_delim)
 {
     printf("%s", message);
 
+    bool is_eof = false;
+
     if (MAX_STR_SIZE != 0)
     {
-        return parse_prompt(input, MAX_STR_SIZE, NO_PARSE_OPT, delim, matched_delim);
+        parse_prompt(input, MAX_STR_SIZE, NO_PARSE_OPT, delim, matched_delim, &is_eof);
+
+        if (is_eof)
+        {
+            return EOF;
+        }
+        else if (input[0] != '\0')
+        {
+            return 1;
+        }
     }
 
     return 0;
 }
 
-size_t prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE)
+int prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE)
 {
     printf("%s", message);
 
+    bool is_eof = false;
+
     if (MAX_STR_SIZE != 0)
     {
-        return parse_prompt(input, MAX_STR_SIZE, NO_PARSE_OPT, "\0", true);
+        parse_prompt(input, MAX_STR_SIZE, NO_PARSE_OPT, "\0", true, &is_eof);
+
+        if (is_eof)
+        {
+            return EOF;
+        }
+        else if (input[0] != '\0')
+        {
+            return 1;
+        }
     }
 
     return 0;
 }
 
-size_t prompt(const char *message, const char *format, ...)
+int prompt(const char *message, const char *format, ...)
 {
     printf("%s", message);
 
-    size_t size = 0;
+    int result = 0;
+    int successfully_read = 0;
     char *format_alloc = strdup(format);
     char *format_copy = format_alloc;
     char *specifier = strsep(&format_copy, "%");
@@ -348,12 +432,21 @@ size_t prompt(const char *message, const char *format, ...)
     while (format_copy != NULL)
     {
         specifier = strsep(&format_copy, "%");
-        size += parse_format(args, specifier, (format_copy != NULL));
+        result = parse_format(args, specifier, (format_copy != NULL));
+
+        if (result == EOF)
+        {
+            va_end(args);
+            free(format_alloc);
+
+            return EOF;
+        }
+
+        successfully_read += result;
     }
 
     va_end(args);
-
     free(format_alloc);
 
-    return size;
+    return successfully_read;
 }

@@ -8,10 +8,9 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <ctype.h>
-#include <errno.h>
 
-size_t prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, char *delim, bool matched_delim);
-size_t prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE);
-size_t prompt(const char *message, const char *format, ...);
+int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, char *delim, bool matched_delim);
+int prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE);
+int prompt(const char *message, const char *format, ...);
 
 #endif /* PROMPT_H */
