@@ -7,7 +7,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <limits.h>
-#include <ctype.h>
 
 int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, char *delim, bool matched_delim);
 int prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE);
