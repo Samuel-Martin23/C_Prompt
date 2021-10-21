@@ -11,7 +11,7 @@
 #define NO_PARSE_OPT                0u
 #define MULTIPLE_SPECIFIERS         1u
 #define STOP_AT_SPACE               2u
-#define STOP_AT_ALPHA               4u
+#define READ_DIGIT_ONLY             4u
 
 #define strchr_bool(s, c)           (bool)(strchr(s, c))
 
@@ -40,7 +40,7 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
         else if (continue_reading)
         {
             if (((parse_opt & STOP_AT_SPACE) && ch == ' ')
-                || ((parse_opt & STOP_AT_ALPHA) && isalpha(ch))
+                || ((parse_opt & READ_DIGIT_ONLY) && !(isdigit(ch)))
                 || strchr_bool(delim, ch) == matched_delim)
             {
                 continue_reading = false;
@@ -64,7 +64,7 @@ static int parse_uint(va_list args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     unsigned int *arg_value = va_arg(args, unsigned int*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_DIGIT_ONLY), "\0", true, &is_eof);
 
     if (is_eof)
     {
@@ -116,7 +116,7 @@ static int parse_ulong(va_list args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     unsigned long *arg_value = va_arg(args, unsigned long*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_DIGIT_ONLY), "\0", true, &is_eof);
 
     if (is_eof)
     {
@@ -138,7 +138,7 @@ static int parse_double(va_list args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     double *arg_value = va_arg(args, double*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_DIGIT_ONLY), "\0", true, &is_eof);
 
     if (is_eof)
     {
@@ -160,7 +160,7 @@ static int parse_long(va_list args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     long *arg_value = va_arg(args, long*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_DIGIT_ONLY), "\0", true, &is_eof);
 
     if (is_eof)
     {
@@ -183,7 +183,7 @@ static int parse_ushort(va_list args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     unsigned short *arg_value = va_arg(args, unsigned short*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_DIGIT_ONLY), "\0", true, &is_eof);
 
     if (is_eof)
     {
@@ -215,7 +215,7 @@ static int parse_short(va_list args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     short *arg_value = va_arg(args, short*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_DIGIT_ONLY), "\0", true, &is_eof);
 
     if (is_eof)
     {
@@ -250,7 +250,7 @@ static int parse_float(va_list args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     float *arg_value = va_arg(args, float*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_DIGIT_ONLY), "\0", true, &is_eof);
 
     if (is_eof)
     {
@@ -273,7 +273,7 @@ static int parse_int(va_list args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     int *arg_value = va_arg(args, int*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | STOP_AT_ALPHA), "\0", true, &is_eof);
+    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_DIGIT_ONLY), "\0", true, &is_eof);
 
     if (is_eof)
     {
