@@ -447,10 +447,7 @@ int prompt(const char *message, const char *format, ...)
 
         if (result == EOF || result == 0)
         {
-            va_end(args);
-            free(format_alloc);
-
-            return (result == 0) ? successfully_read : EOF;
+            break;
         }
 
         successfully_read += result;
@@ -459,5 +456,5 @@ int prompt(const char *message, const char *format, ...)
     va_end(args);
     free(format_alloc);
 
-    return successfully_read;
+    return (result == EOF) ? EOF : successfully_read;
 }
