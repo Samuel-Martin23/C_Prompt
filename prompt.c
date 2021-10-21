@@ -1,11 +1,16 @@
 #include "prompt.h"
 
-// They could be unsigned so I need to
-// typecast them to long.
+// USHRT_MAX and UINT32_MAX could be unsigned
+// so I need to typecast them.
 #define USHRT_MIN                   -((long)USHRT_MAX) - 1
 #define UINT32_MIN                  -((long)UINT32_MAX) - 1
 
+
+// How I determined MAX_READ.
+// https://stackoverflow.com/questions/1701055/
+// what-is-the-maximum-length-in-chars-needed-to-represent-any-double-value
 #define MAX_READ                    1080u
+
 #define MAX_FORMAT                  2u
 
 #define NO_PARSE_OPT                0u
@@ -15,6 +20,8 @@
 
 #define strchr_bool(s, c)           (bool)(strchr(s, c))
 
+// This function was inspired by this video:
+// https://youtu.be/NsB6dqvVu7Y?t=231
 static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse_opt, char *delim, bool matched_delim, bool *is_eof)
 {
     size_t i = 0;
