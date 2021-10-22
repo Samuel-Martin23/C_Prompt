@@ -16,7 +16,6 @@
 #define MULTIPLE_SPECIFIERS         1u
 #define STOP_AT_SPACE               2u
 #define READ_NUMERICS_ONLY          4u
-#define READ_EVERYTHING             8u
 
 #define strchr_bool(s, c)           (bool)(strchr(s, c))
 
@@ -56,28 +55,6 @@ static char *alloc_str(const char *s)
     return str;
 }
 
-static void check_format_specifiers(int last_ch_read, char beginning, bool *is_eof, FILE *stream)
-{
-    // If you pass in multiple format specifiers
-    // and one of them fails.
-    int ch = '\0';
-
-    if (last_ch_read == ' ' && beginning == '\0')
-    {
-        ch = getc(stream);
-
-        while (ch != '\n' && ch != EOF)
-        {
-            ch = getc(stream);
-        }
-
-        if (ch == EOF && is_eof != NULL)
-        {
-            *is_eof = true;
-        }
-    }
-}
-
 static bool is_numeric_rep(int c)
 {
     if ((c >= '0' && c <= '9') || c == '.' || c == '-')
@@ -97,7 +74,7 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
     bool continue_reading = true;
     const size_t LAST_INDEX = MAX_SIZE - 1;
 
-    if (stream == stdin && !(parse_opt & READ_EVERYTHING))
+    if (stream == stdin && !(parse_opt == NO_PARSE_OPT))
     {
         while (ch == '\n' || ch == ' ')
         {
@@ -136,17 +113,27 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
 
     input[i] = '\0';
 
-    check_format_specifiers(ch, input[0], is_eof, stream);
+    // If you pass in multiple format specifiers
+    // and one of them fails.
+    if (((parse_opt & MULTIPLE_SPECIFIERS) && ch == ' ') && input[0] == '\0')
+    {
+        ch = getc(stream);
+
+        while (ch != '\n' && ch != EOF)
+        {
+            ch = getc(stream);
+        }
+
+        if (ch == EOF && is_eof != NULL)
+        {
+            *is_eof = true;
+        }
+    }
 }
 
-static void parse_number(char *input, const size_t MAX_SIZE, bool multple_specifiers, bool *is_eof)
+static void parse_input(char *input, const size_t MAX_SIZE, const unsigned char parse_opt, bool *is_eof)
 {
-    parse_prompt(input, MAX_SIZE, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), "\0", true, is_eof, stdin);
-}
-
-static void parse_chars(char *input, const size_t MAX_SIZE, bool multple_specifiers, bool *is_eof)
-{
-    parse_prompt(input, MAX_SIZE, (multple_specifiers | STOP_AT_SPACE), "\0", true, is_eof, stdin);
+    parse_prompt(input, MAX_SIZE, parse_opt, "", true, is_eof, stdin);
 }
 
 static int parse_uint(va_list *args, bool multple_specifiers)
@@ -156,7 +143,7 @@ static int parse_uint(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     unsigned int *arg_value = va_arg(*args, unsigned int*);
 
-    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
+    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
 
     if (is_eof)
     {
@@ -190,7 +177,7 @@ static int parse_str(va_list *args, bool multple_specifiers)
         return 0;
     }
 
-    parse_chars(input, MAX_STR_SIZE, multple_specifiers, &is_eof);
+    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE), &is_eof);
 
     if (is_eof)
     {
@@ -206,7 +193,7 @@ static int parse_ulong(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     unsigned long *arg_value = va_arg(*args, unsigned long*);
 
-    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
+    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
 
     if (is_eof)
     {
@@ -228,7 +215,7 @@ static int parse_double(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     double *arg_value = va_arg(*args, double*);
 
-    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
+    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
 
     if (is_eof)
     {
@@ -250,7 +237,7 @@ static int parse_long(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     long *arg_value = va_arg(*args, long*);
 
-    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
+    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
 
     if (is_eof)
     {
@@ -273,7 +260,7 @@ static int parse_ushort(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     unsigned short *arg_value = va_arg(*args, unsigned short*);
 
-    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
+    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
 
     if (is_eof)
     {
@@ -305,7 +292,7 @@ static int parse_short(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     short *arg_value = va_arg(*args, short*);
 
-    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
+    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
 
     if (is_eof)
     {
@@ -340,7 +327,7 @@ static int parse_float(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     float *arg_value = va_arg(*args, float*);
 
-    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
+    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
 
     if (is_eof)
     {
@@ -363,7 +350,7 @@ static int parse_int(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     int *arg_value = va_arg(*args, int*);
 
-    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
+    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
 
     if (is_eof)
     {
@@ -398,7 +385,7 @@ static int parse_char(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     char *arg_value = va_arg(*args, char*);
 
-    parse_chars(input, MAX_READ, multple_specifiers, &is_eof);
+    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE), &is_eof);
 
     if (is_eof)
     {
@@ -480,7 +467,7 @@ int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_
 
 int prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE, FILE *stream)
 {
-    return prompt_getline_delim(message, input, MAX_STR_SIZE, "\0", true, stream);
+    return prompt_getline_delim(message, input, MAX_STR_SIZE, "", true, stream);
 }
 
 int prompt(const char *message, const char *format, ...)
