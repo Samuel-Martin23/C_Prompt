@@ -20,6 +20,28 @@
 
 #define strchr_bool(s, c)           (bool)(strchr(s, c))
 
+void check_format_specifiers(int last_ch_read, char beginning, bool *is_eof)
+{
+    // If you pass in multiple format specifiers
+    // and one of them falls.
+    int ch = '\0';
+
+    if (last_ch_read == ' ' && beginning == '\0')
+    {
+        ch = getchar();
+
+        while (ch != '\n' && ch != EOF)
+        {
+            ch = getchar();
+        }
+
+        if (ch == EOF && is_eof != NULL)
+        {
+            *is_eof = true;
+        }
+    }
+}
+
 static bool is_numeric_rep(int c)
 {
     if ((c >= '0' && c <= '9') || c == '.' || c == '-')
@@ -37,6 +59,7 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
     size_t i = 0;
     int ch = getchar();
     bool continue_reading = true;
+    const size_t LAST_INDEX = MAX_SIZE - 1;
 
     while (ch == '\n' || ch == ' ')
     {
@@ -56,13 +79,14 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
         }
         else if (continue_reading)
         {
-            if (((parse_opt & STOP_AT_SPACE) && ch == ' ')
+            if (i == LAST_INDEX
+                || ((parse_opt & STOP_AT_SPACE) && ch == ' ')
                 || ((parse_opt & READ_NUMERICS_ONLY) && !(is_numeric_rep(ch)))
                 || strchr_bool(delim, ch) == matched_delim)
             {
                 continue_reading = false;
             }
-            else if (i < (MAX_SIZE - 1))
+            else
             {
                 input[i++] = (char)ch;
             }
@@ -72,6 +96,8 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
     }
 
     input[i] = '\0';
+
+    check_format_specifiers(ch, input[0], is_eof);
 }
 
 static int parse_uint(va_list *args, bool multple_specifiers)
