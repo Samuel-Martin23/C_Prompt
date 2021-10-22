@@ -56,7 +56,7 @@ static char *alloc_str(const char *s)
     return str;
 }
 
-void check_format_specifiers(int last_ch_read, char beginning, bool *is_eof)
+static void check_format_specifiers(int last_ch_read, char beginning, bool *is_eof)
 {
     // If you pass in multiple format specifiers
     // and one of them falls.
