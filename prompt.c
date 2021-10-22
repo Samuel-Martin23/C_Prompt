@@ -117,12 +117,10 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
     // and one of them fails.
     if (((parse_opt & MULTIPLE_SPECIFIERS) && ch == ' ') && input[0] == '\0')
     {
-        ch = getc(stream);
-
-        while (ch != '\n' && ch != EOF)
+        do
         {
             ch = getc(stream);
-        }
+        } while (ch != '\n' && ch != EOF);
 
         if (ch == EOF && is_eof != NULL)
         {
