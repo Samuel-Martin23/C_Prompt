@@ -5,7 +5,6 @@
 #define USHRT_MIN                   -((long)USHRT_MAX) - 1
 #define UINT32_MIN                  -((long)UINT32_MAX) - 1
 
-
 // How I determined MAX_READ.
 // https://stackoverflow.com/questions/1701055/
 // what-is-the-maximum-length-in-chars-needed-to-represent-any-double-value
@@ -59,7 +58,7 @@ static char *alloc_str(const char *s)
 static void check_format_specifiers(int last_ch_read, char beginning, bool *is_eof)
 {
     // If you pass in multiple format specifiers
-    // and one of them falls.
+    // and one of them fails.
     int ch = '\0';
 
     if (last_ch_read == ' ' && beginning == '\0')
