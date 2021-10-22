@@ -20,6 +20,42 @@
 
 #define strchr_bool(s, c)           (bool)(strchr(s, c))
 
+// Separates a str with a multi-character delimiter.
+static char *strsep_chars(char **data, const char *separator) 
+{
+    if (*data == NULL)
+    {
+        return *data;
+    }
+
+    char *end = strstr(*data, separator);
+    char *temp = *data;
+
+    if (end == NULL)
+    {
+        *data = NULL;
+        return temp;
+    }
+
+    *end = '\0';
+    *data = end + strlen(separator);
+
+    return temp;
+}
+
+static char *alloc_str(const char *s)
+{
+    size_t size = strlen(s) + 1;
+    char *str = malloc(sizeof(char) * size);
+
+    if (str != NULL)
+    {
+        memcpy(str, s, size);
+    }
+
+    return str;
+}
+
 void check_format_specifiers(int last_ch_read, char beginning, bool *is_eof)
 {
     // If you pass in multiple format specifiers
@@ -434,23 +470,7 @@ int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_
 
 int prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE)
 {
-    printf("%s", message);
-
-    bool is_eof = false;
-
-    if (MAX_STR_SIZE != 0)
-    {
-        parse_prompt(input, MAX_STR_SIZE, NO_PARSE_OPT, "\0", true, &is_eof);
-
-        if (is_eof)
-        {
-            return EOF;
-        }
-
-        return 1;
-    }
-
-    return 0;
+    return prompt_getline_delim(message, input, MAX_STR_SIZE, "\0", true);
 }
 
 int prompt(const char *message, const char *format, ...)
@@ -459,16 +479,16 @@ int prompt(const char *message, const char *format, ...)
 
     int result = 0;
     int successfully_read = 0;
-    char *format_alloc = strdup(format);
+    char *format_alloc = alloc_str(format);
     char *format_copy = format_alloc;
-    char *specifier = strsep(&format_copy, "%");
+    char *specifier = strsep_chars(&format_copy, "%");
 
     va_list args;
     va_start(args, format);
 
     while (format_copy != NULL)
     {
-        specifier = strsep(&format_copy, "%");
+        specifier = strsep_chars(&format_copy, "%");
         result = parse_format(&args, specifier, (format_copy != NULL));
 
         if (result == EOF || result == 0)
