@@ -16,6 +16,7 @@
 #define MULTIPLE_SPECIFIERS         1u
 #define STOP_AT_SPACE               2u
 #define READ_NUMERICS_ONLY          4u
+#define READ_EVERYTHING             8u
 
 #define strchr_bool(s, c)           (bool)(strchr(s, c))
 
@@ -55,7 +56,7 @@ static char *alloc_str(const char *s)
     return str;
 }
 
-static void check_format_specifiers(int last_ch_read, char beginning, bool *is_eof)
+static void check_format_specifiers(int last_ch_read, char beginning, bool *is_eof, FILE *stream)
 {
     // If you pass in multiple format specifiers
     // and one of them fails.
@@ -63,11 +64,11 @@ static void check_format_specifiers(int last_ch_read, char beginning, bool *is_e
 
     if (last_ch_read == ' ' && beginning == '\0')
     {
-        ch = getchar();
+        ch = getc(stream);
 
         while (ch != '\n' && ch != EOF)
         {
-            ch = getchar();
+            ch = getc(stream);
         }
 
         if (ch == EOF && is_eof != NULL)
@@ -89,16 +90,19 @@ static bool is_numeric_rep(int c)
 
 // This function was inspired by this video:
 // https://youtu.be/NsB6dqvVu7Y?t=231
-static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse_opt, char *delim, bool matched_delim, bool *is_eof)
+static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse_opt, char *delim, bool matched_delim, bool *is_eof, FILE *stream)
 {
     size_t i = 0;
-    int ch = getchar();
+    int ch = getc(stream);
     bool continue_reading = true;
     const size_t LAST_INDEX = MAX_SIZE - 1;
 
-    while (ch == '\n' || ch == ' ')
+    if (stream == stdin && !(parse_opt & READ_EVERYTHING))
     {
-        ch = getchar();
+        while (ch == '\n' || ch == ' ')
+        {
+            ch = getc(stream);
+        }
     }
 
     while (true)
@@ -127,12 +131,22 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
             }
         }
 
-        ch = getchar();
+        ch = getc(stream);
     }
 
     input[i] = '\0';
 
-    check_format_specifiers(ch, input[0], is_eof);
+    check_format_specifiers(ch, input[0], is_eof, stream);
+}
+
+static void parse_number(char *input, const size_t MAX_SIZE, bool multple_specifiers, bool *is_eof)
+{
+    parse_prompt(input, MAX_SIZE, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), "\0", true, is_eof, stdin);
+}
+
+static void parse_chars(char *input, const size_t MAX_SIZE, bool multple_specifiers, bool *is_eof)
+{
+    parse_prompt(input, MAX_SIZE, (multple_specifiers | STOP_AT_SPACE), "\0", true, is_eof, stdin);
 }
 
 static int parse_uint(va_list *args, bool multple_specifiers)
@@ -142,7 +156,7 @@ static int parse_uint(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     unsigned int *arg_value = va_arg(*args, unsigned int*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), "\0", true, &is_eof);
+    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
 
     if (is_eof)
     {
@@ -171,19 +185,19 @@ static int parse_str(va_list *args, bool multple_specifiers)
     char *input = va_arg(*args, char*);
     const size_t MAX_STR_SIZE = va_arg(*args, size_t);
 
-    if (MAX_STR_SIZE != 0)
+    if (MAX_STR_SIZE == 0)
     {
-        parse_prompt(input, MAX_STR_SIZE, (multple_specifiers | STOP_AT_SPACE), "\0", true, &is_eof);
-
-        if (is_eof)
-        {
-            return EOF;
-        }
-
-        return 1;
+        return 0;
     }
 
-    return 0;
+    parse_chars(input, MAX_STR_SIZE, multple_specifiers, &is_eof);
+
+    if (is_eof)
+    {
+        return EOF;
+    }
+
+    return 1;
 }
 
 static int parse_ulong(va_list *args, bool multple_specifiers)
@@ -192,7 +206,7 @@ static int parse_ulong(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     unsigned long *arg_value = va_arg(*args, unsigned long*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), "\0", true, &is_eof);
+    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
 
     if (is_eof)
     {
@@ -214,7 +228,7 @@ static int parse_double(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     double *arg_value = va_arg(*args, double*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), "\0", true, &is_eof);
+    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
 
     if (is_eof)
     {
@@ -236,7 +250,7 @@ static int parse_long(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     long *arg_value = va_arg(*args, long*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), "\0", true, &is_eof);
+    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
 
     if (is_eof)
     {
@@ -259,7 +273,7 @@ static int parse_ushort(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     unsigned short *arg_value = va_arg(*args, unsigned short*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), "\0", true, &is_eof);
+    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
 
     if (is_eof)
     {
@@ -291,7 +305,7 @@ static int parse_short(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     short *arg_value = va_arg(*args, short*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), "\0", true, &is_eof);
+    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
 
     if (is_eof)
     {
@@ -326,7 +340,7 @@ static int parse_float(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     float *arg_value = va_arg(*args, float*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), "\0", true, &is_eof);
+    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
 
     if (is_eof)
     {
@@ -349,7 +363,7 @@ static int parse_int(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     int *arg_value = va_arg(*args, int*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), "\0", true, &is_eof);
+    parse_number(input, MAX_READ, multple_specifiers, &is_eof);
 
     if (is_eof)
     {
@@ -384,7 +398,7 @@ static int parse_char(va_list *args, bool multple_specifiers)
     char input[MAX_READ] = {0};
     char *arg_value = va_arg(*args, char*);
 
-    parse_prompt(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE), "\0", true, &is_eof);
+    parse_chars(input, MAX_READ, multple_specifiers, &is_eof);
 
     if (is_eof)
     {
@@ -446,30 +460,27 @@ static int parse_format(va_list *args, char *specifier, bool multple_specifiers)
     return 0;
 }
 
-int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, char *delim, bool matched_delim)
+int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, char *delim, bool matched_delim, FILE *stream)
 {
-    printf("%s", message);
-
-    bool is_eof = false;
-
-    if (MAX_STR_SIZE != 0)
+    if (MAX_STR_SIZE == 0)
     {
-        parse_prompt(input, MAX_STR_SIZE, NO_PARSE_OPT, delim, matched_delim, &is_eof);
-
-        if (is_eof)
-        {
-            return EOF;
-        }
-
-        return 1;
+        return 0;
+    }
+    else if (feof(stream))
+    {
+        return EOF;
     }
 
-    return 0;
+    printf("%s", message);
+
+    parse_prompt(input, MAX_STR_SIZE, NO_PARSE_OPT, delim, matched_delim, NULL, stream);
+
+    return 1;
 }
 
-int prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE)
+int prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE, FILE *stream)
 {
-    return prompt_getline_delim(message, input, MAX_STR_SIZE, "\0", true);
+    return prompt_getline_delim(message, input, MAX_STR_SIZE, "\0", true, stream);
 }
 
 int prompt(const char *message, const char *format, ...)
