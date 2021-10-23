@@ -55,6 +55,18 @@ static char *alloc_str(const char *s)
     return str;
 }
 
+static bool check_eof(int ch, bool *is_eof)
+{
+    bool exp = (ch == EOF && is_eof != NULL);
+
+    if (exp)
+    {
+        *is_eof = true;
+    }
+
+    return exp;
+}
+
 static bool is_numeric_rep(int c)
 {
     if ((c >= '0' && c <= '9') || c == '.' || c == '-')
@@ -69,8 +81,14 @@ static bool is_numeric_rep(int c)
 // https://youtu.be/NsB6dqvVu7Y?t=231
 static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse_opt, char *delim, bool matched_delim, bool *is_eof, FILE *stream)
 {
-    size_t i = 0;
     int ch = getc(stream);
+    
+    if (check_eof(ch, is_eof))
+    {
+        return;
+    }
+
+    size_t i = 0;
     bool continue_reading = true;
     const size_t LAST_INDEX = MAX_SIZE - 1;
 
@@ -86,11 +104,7 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
     {
         if (ch == '\n' || ch == EOF || ((parse_opt & MULTIPLE_SPECIFIERS) && ch == ' '))
         {
-            if (ch == EOF && is_eof != NULL)
-            {
-                *is_eof = true;
-            }
-
+            check_eof(ch, is_eof);
             break;
         }
         else if (continue_reading)
@@ -122,10 +136,7 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
             ch = getc(stream);
         } while (ch != '\n' && ch != EOF);
 
-        if (ch == EOF && is_eof != NULL)
-        {
-            *is_eof = true;
-        }
+        check_eof(ch, is_eof);
     }
 }
 
