@@ -169,8 +169,10 @@ static int parse_uint(va_list *args, bool multple_specifiers)
     {
         *arg_value = UINT32_MAX;
     }
-
-    *arg_value = (unsigned int)number;
+    else
+    {
+        *arg_value = (unsigned int)number;
+    }
 
     return 1;
 }
