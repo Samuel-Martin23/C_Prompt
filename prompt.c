@@ -19,6 +19,13 @@
 
 #define strchr_bool(s, c)           (bool)(strchr(s, c))
 
+typedef struct parser
+{
+    unsigned char parse_options;
+    void *(*get_arg)(va_list *args);
+    void (*parse_type)(const char *str, void *arg);
+} parser_t;
+
 // Separates a str with a multi-character delimiter.
 static char *strsep_chars(char **data, const char *separator) 
 {
@@ -55,18 +62,6 @@ static char *alloc_str(const char *s)
     return str;
 }
 
-static bool check_eof(int ch, bool *is_eof)
-{
-    bool exp = (ch == EOF && is_eof != NULL);
-
-    if (exp)
-    {
-        *is_eof = true;
-    }
-
-    return exp;
-}
-
 static bool is_numeric_rep(int c)
 {
     if ((c >= '0' && c <= '9') || c == '.' || c == '-')
@@ -75,6 +70,18 @@ static bool is_numeric_rep(int c)
     }
 
     return false;
+}
+
+static bool check_eof(int ch, bool *is_eof)
+{
+    bool condition = (ch == EOF && is_eof != NULL);
+
+    if (condition)
+    {
+        *is_eof = true;
+    }
+
+    return condition;
 }
 
 // This function was inspired by this video:
@@ -140,19 +147,121 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
     }
 }
 
-static void parse_input(char *input, const size_t MAX_SIZE, const unsigned char parse_opt, bool *is_eof)
+static void *va_arg_uint(va_list *args) {return (void*)va_arg(*args, unsigned int*);}
+static void *va_arg_ulong(va_list *args) {return (void*)va_arg(*args, unsigned long*);}
+static void *va_arg_double(va_list *args) {return (void*)va_arg(*args, double*);}
+static void *va_arg_long(va_list *args) {return (void*)va_arg(*args, long*);}
+static void *va_arg_ushort(va_list *args) {return (void*)va_arg(*args, unsigned short*);}
+static void *va_arg_short(va_list *args) {return (void*)va_arg(*args, short*);}
+static void *va_arg_float(va_list *args) {return (void*)va_arg(*args, float*);}
+static void *va_arg_int(va_list *args) {return (void*)va_arg(*args, int*);}
+static void *va_arg_char(va_list *args) {return (void*)va_arg(*args, char*);}
+
+static void parse_uint(const char *str, void *arg) 
 {
-    parse_prompt(input, MAX_SIZE, parse_opt, "", true, is_eof, stdin);
+    long number = strtol(str, NULL, 10);
+    unsigned int *uint_arg = (unsigned int*)arg;
+
+    if (number > UINT32_MAX || number <= UINT32_MIN)
+    {
+        *uint_arg = UINT32_MAX;
+    }
+    else
+    {
+        *uint_arg = (unsigned int)number;
+    }
 }
 
-static int parse_uint(va_list *args, bool multple_specifiers)
+static void parse_ulong(const char *str, void *arg) 
 {
-    long number = 0;
+    unsigned long *ulong_arg = (unsigned long*)arg;
+    *ulong_arg = strtoul(str, NULL, 10);
+}
+
+static void parse_double(const char *str, void *arg) 
+{
+    double *double_arg = (double*)arg;
+    *double_arg = strtod(str, NULL);
+}
+
+static void parse_long(const char *str, void *arg) 
+{
+    long *long_arg = (long*)arg;
+    *long_arg = strtol(str, NULL, 10);
+}
+
+static void parse_ushort(const char *str, void *arg) 
+{
+    long number = strtol(str, NULL, 10);
+    unsigned short *ushort_arg = (unsigned short*)arg;
+
+    if (number > USHRT_MAX || number <= USHRT_MIN)
+    {
+        *ushort_arg = USHRT_MAX;
+    }
+    else
+    {
+        *ushort_arg = (unsigned short)number;
+    }
+}
+
+static void parse_short(const char *str, void *arg) 
+{
+    long number = strtol(str, NULL, 10);
+    short *short_arg = (short*)arg;
+
+    if (number < SHRT_MIN)
+    {
+        *short_arg = SHRT_MIN;
+    }
+    else if (number > SHRT_MAX)
+    {
+        *short_arg = SHRT_MAX;
+    }
+    else
+    {
+        *short_arg = (short)number;
+    }
+}
+
+static void parse_float(const char *str, void *arg) 
+{
+    float *float_arg = (float*)arg;
+    *float_arg = strtof(str, NULL);
+}
+
+static void parse_int(const char *str, void *arg) 
+{
+    long number = strtol(str, NULL, 10);
+    int *int_arg = (int*)arg;
+
+    if (number < INT32_MIN)
+    {
+        *int_arg = INT32_MIN;
+    }
+    else if (number > INT32_MAX)
+    {
+        *int_arg = INT32_MAX;
+    }
+    else
+    {
+        *int_arg = (int)number;
+    }
+}
+
+static void parse_char(const char *str, void *arg) 
+{
+    char *char_arg = (char*)arg;
+    *char_arg = str[0];
+}
+
+static int parse_arg(va_list *args, parser_t *p)
+{
     bool is_eof = false;
     char input[MAX_READ] = {0};
-    unsigned int *arg_value = va_arg(*args, unsigned int*);
+    void *arg_value = p->get_arg(args);
 
-    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
+    parse_prompt(input, MAX_READ, p->parse_options, "", true, &is_eof, stdin);
 
     if (is_eof)
     {
@@ -163,21 +272,12 @@ static int parse_uint(va_list *args, bool multple_specifiers)
         return 0;
     }
 
-    number = strtol(input, NULL, 10);
-
-    if (number > UINT32_MAX || number <= UINT32_MIN)
-    {
-        *arg_value = UINT32_MAX;
-    }
-    else
-    {
-        *arg_value = (unsigned int)number;
-    }
+    p->parse_type(input, arg_value);
 
     return 1;
 }
 
-static int parse_str(va_list *args, bool multple_specifiers)
+static int parse_str(va_list *args, unsigned char parse_opt)
 {
     bool is_eof = false;
     char *input = va_arg(*args, char*);
@@ -188,271 +288,66 @@ static int parse_str(va_list *args, bool multple_specifiers)
         return 0;
     }
 
-    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE), &is_eof);
+    parse_prompt(input, MAX_STR_SIZE, parse_opt, "", true, &is_eof, stdin);
 
     if (is_eof)
     {
         return EOF;
     }
-
-    return 1;
-}
-
-static int parse_ulong(va_list *args, bool multple_specifiers)
-{
-    bool is_eof = false;
-    char input[MAX_READ] = {0};
-    unsigned long *arg_value = va_arg(*args, unsigned long*);
-
-    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
-
-    if (is_eof)
-    {
-        return EOF;
-    }
-    else if (input[0] == '\0')
-    {
-        return 0;
-    }
-
-    *arg_value = strtoul(input, NULL, 10);
-
-    return 1;
-}
-
-static int parse_double(va_list *args, bool multple_specifiers)
-{
-    bool is_eof = false;
-    char input[MAX_READ] = {0};
-    double *arg_value = va_arg(*args, double*);
-
-    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
-
-    if (is_eof)
-    {
-        return EOF;
-    }
-    else if (input[0] == '\0')
-    {
-        return 0;
-    }
-
-    *arg_value = strtod(input, NULL);
-
-    return 1;
-}
-
-static int parse_long(va_list *args, bool multple_specifiers)
-{
-    bool is_eof = false;
-    char input[MAX_READ] = {0};
-    long *arg_value = va_arg(*args, long*);
-
-    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
-
-    if (is_eof)
-    {
-        return EOF;
-    }
-    else if (input[0] == '\0')
-    {
-        return 0;
-    }
-
-    *arg_value = strtol(input, NULL, 10);
-
-    return 1;
-}
-
-static int parse_ushort(va_list *args, bool multple_specifiers)
-{
-    long number = 0;
-    bool is_eof = false;
-    char input[MAX_READ] = {0};
-    unsigned short *arg_value = va_arg(*args, unsigned short*);
-
-    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
-
-    if (is_eof)
-    {
-        return EOF;
-    }
-    else if (input[0] == '\0')
-    {
-        return 0;
-    }
-
-    number = strtol(input, NULL, 10);
-
-    if (number > USHRT_MAX || number <= USHRT_MIN)
-    {
-        *arg_value = USHRT_MAX;
-    }
-    else
-    {
-        *arg_value = (unsigned short)number;
-    }
-
-    return 1;
-}
-
-static int parse_short(va_list *args, bool multple_specifiers)
-{
-    long number = 0;
-    bool is_eof = false;
-    char input[MAX_READ] = {0};
-    short *arg_value = va_arg(*args, short*);
-
-    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
-
-    if (is_eof)
-    {
-        return EOF;
-    }
-    else if (input[0] == '\0')
-    {
-        return 0;
-    }
-
-    number = strtol(input, NULL, 10);
-
-    if (number < SHRT_MIN)
-    {
-        *arg_value = SHRT_MIN;
-    }
-    else if (number > SHRT_MAX)
-    {
-        *arg_value = SHRT_MAX;
-    }
-    else
-    {
-        *arg_value = (short)number;
-    }
-
-    return 1;
-}
-
-static int parse_float(va_list *args, bool multple_specifiers)
-{
-    bool is_eof = false;
-    char input[MAX_READ] = {0};
-    float *arg_value = va_arg(*args, float*);
-
-    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
-
-    if (is_eof)
-    {
-        return EOF;
-    }
-    else if (input[0] == '\0')
-    {
-        return 0;
-    }
-
-    *arg_value = strtof(input, NULL);
-
-    return 1;
-}
-
-static int parse_int(va_list *args, bool multple_specifiers)
-{
-    long number = 0;
-    bool is_eof = false;
-    char input[MAX_READ] = {0};
-    int *arg_value = va_arg(*args, int*);
-
-    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), &is_eof);
-
-    if (is_eof)
-    {
-        return EOF;
-    }
-    else if (input[0] == '\0')
-    {
-        return 0;
-    }
-
-    number = strtol(input, NULL, 10);
-
-    if (number < INT32_MIN)
-    {
-        *arg_value = INT32_MIN;
-    }
-    else if (number > INT32_MAX)
-    {
-        *arg_value = INT32_MAX;
-    }
-    else
-    {
-        *arg_value = (int)number;
-    }
-
-    return 1;
-}
-
-static int parse_char(va_list *args, bool multple_specifiers)
-{
-    bool is_eof = false;
-    char input[MAX_READ] = {0};
-    char *arg_value = va_arg(*args, char*);
-
-    parse_input(input, MAX_READ, (multple_specifiers | STOP_AT_SPACE), &is_eof);
-
-    if (is_eof)
-    {
-        return EOF;
-    }
-    else if (input[0] == '\0')
-    {
-        return 0;
-    }
-
-    *arg_value = input[0];
 
     return 1;
 }
 
 static int parse_format(va_list *args, char *specifier, bool multple_specifiers)
 {
-    if (!(strncmp(specifier, "c", MAX_FORMAT)))
+    if (!(strncmp(specifier, "s", MAX_FORMAT)))
     {
-        return parse_char(args, multple_specifiers);
+        return parse_str(args, (multple_specifiers | STOP_AT_SPACE));
+    }
+    else if (!(strncmp(specifier, "c", MAX_FORMAT)))
+    {
+        parser_t char_parser = {(multple_specifiers | STOP_AT_SPACE), va_arg_char, parse_char};
+        return parse_arg(args, &char_parser);
     }
     else if (!(strncmp(specifier, "d", MAX_FORMAT)))
     {
-        return parse_int(args, multple_specifiers);
+        parser_t int_parser = {(multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), va_arg_int, parse_int};
+        return parse_arg(args, &int_parser);
     }
     else if (!(strncmp(specifier, "f", MAX_FORMAT)))
     {
-        return parse_float(args, multple_specifiers);
+        parser_t float_parser = {(multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), va_arg_float, parse_float};
+        return parse_arg(args, &float_parser);
     }
     else if (!(strncmp(specifier, "hi", MAX_FORMAT)))
     {
-        return parse_short(args, multple_specifiers);
+        parser_t short_parser = {(multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), va_arg_short, parse_short};
+        return parse_arg(args, &short_parser);
     }
     else if (!(strncmp(specifier, "hu", MAX_FORMAT)))
     {
-        return parse_ushort(args, multple_specifiers);
+        parser_t ushort_parser = {(multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), va_arg_ushort, parse_ushort};
+        return parse_arg(args, &ushort_parser);
     }
     else if (!(strncmp(specifier, "ld", MAX_FORMAT)))
     {
-        return parse_long(args, multple_specifiers);
+        parser_t long_parser = {(multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), va_arg_long, parse_long};
+        return parse_arg(args, &long_parser);
     }
     else if (!(strncmp(specifier, "lf", MAX_FORMAT)))
     {
-        return parse_double(args, multple_specifiers);
+        parser_t double_parser = {(multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), va_arg_double, parse_double};
+        return parse_arg(args, &double_parser);
     }
     else if (!(strncmp(specifier, "lu", MAX_FORMAT)))
     {
-        return parse_ulong(args, multple_specifiers);
-    }
-    else if (!(strncmp(specifier, "s", MAX_FORMAT)))
-    {
-        return parse_str(args, multple_specifiers);
+        parser_t ulong_parser = {(multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), va_arg_ulong, parse_ulong};
+        return parse_arg(args, &ulong_parser);
     }
     else if (!(strncmp(specifier, "u", MAX_FORMAT)))
     {
-        return parse_uint(args, multple_specifiers);
+        parser_t uint_parser = {(multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY), va_arg_uint, parse_uint};
+        return parse_arg(args, &uint_parser);
     }
 
     return 0;
