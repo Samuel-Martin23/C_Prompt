@@ -4,6 +4,7 @@ to get input from the user. There are many advantages
 to using the prompt library compared to other means such as
 scanf or fgets. prompt currently supports these format specifiers:
 %c, %d, %f, %hi, %hu, %ld, %lf, %lu, %s, and %u.
+prompt currently does not support pattern matching.
 
 1. The buffer is flushed when using any prompt library functions.
 scanf leaves \n in the buffer, and fgets just reads a certain number
