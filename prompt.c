@@ -1,7 +1,13 @@
 #include "prompt.h"
 
-// USHRT_MAX and UINT32_MAX could be unsigned
+// USHRT_MAX and UINT32_MAX could be unsigned,
 // so I need to typecast them.
+// I wanted to check when the user goes below the min limit.
+// For example, using ushort, if the user entered -65535
+// the result is 1 as it should be. However, if the user
+// entered -65536, what should it be? So if what the user entered
+// was less than or equal to USHRT_MIN(-65536), the value will
+// be USHRT_MAX(65535). The same thing applies to UINT32_MIN.
 #define USHRT_MIN                   -((long)USHRT_MAX) - 1
 #define UINT32_MIN                  -((long)UINT32_MAX) - 1
 
