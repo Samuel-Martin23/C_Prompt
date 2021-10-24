@@ -306,7 +306,7 @@ static int parse_str(va_list *args, unsigned char parse_opt)
 
 static int parse_format(va_list *args, char *specifier, bool multple_specifiers)
 {
-    parser_t parser;
+    parser_t p;
 
     if (!(strncmp(specifier, "s", MAX_FORMAT)))
     {
@@ -314,75 +314,75 @@ static int parse_format(va_list *args, char *specifier, bool multple_specifiers)
     }
     else if (!(strncmp(specifier, "c", MAX_FORMAT)))
     {
-        parser.parse_opt = (multple_specifiers | STOP_AT_SPACE);
-        parser.get_arg = va_arg_char;
-        parser.parse_type = parse_char;
+        p.parse_opt = (multple_specifiers | STOP_AT_SPACE);
+        p.get_arg = va_arg_char;
+        p.parse_type = parse_char;
     
-        return parse_arg(args, &parser);
+        return parse_arg(args, &p);
     }
     else if (!(strncmp(specifier, "d", MAX_FORMAT)))
     {
-        parser.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
-        parser.get_arg = va_arg_int;
-        parser.parse_type = parse_int;
+        p.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
+        p.get_arg = va_arg_int;
+        p.parse_type = parse_int;
 
-        return parse_arg(args, &parser);
+        return parse_arg(args, &p);
     }
     else if (!(strncmp(specifier, "f", MAX_FORMAT)))
     {
-        parser.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
-        parser.get_arg = va_arg_float;
-        parser.parse_type = parse_float;
+        p.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
+        p.get_arg = va_arg_float;
+        p.parse_type = parse_float;
 
-        return parse_arg(args, &parser);
+        return parse_arg(args, &p);
     }
     else if (!(strncmp(specifier, "hi", MAX_FORMAT)))
     {
-        parser.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
-        parser.get_arg = va_arg_short;
-        parser.parse_type = parse_short;
+        p.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
+        p.get_arg = va_arg_short;
+        p.parse_type = parse_short;
 
-        return parse_arg(args, &parser);
+        return parse_arg(args, &p);
     }
     else if (!(strncmp(specifier, "hu", MAX_FORMAT)))
     {
-        parser.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
-        parser.get_arg = va_arg_ushort;
-        parser.parse_type = parse_ushort;
+        p.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
+        p.get_arg = va_arg_ushort;
+        p.parse_type = parse_ushort;
 
-        return parse_arg(args, &parser);
+        return parse_arg(args, &p);
     }
     else if (!(strncmp(specifier, "ld", MAX_FORMAT)))
     {
-        parser.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
-        parser.get_arg = va_arg_long;
-        parser.parse_type = parse_long;
+        p.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
+        p.get_arg = va_arg_long;
+        p.parse_type = parse_long;
 
-        return parse_arg(args, &parser);
+        return parse_arg(args, &p);
     }
     else if (!(strncmp(specifier, "lf", MAX_FORMAT)))
     {
-        parser.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
-        parser.get_arg = va_arg_double;
-        parser.parse_type = parse_double;
+        p.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
+        p.get_arg = va_arg_double;
+        p.parse_type = parse_double;
 
-        return parse_arg(args, &parser);
+        return parse_arg(args, &p);
     }
     else if (!(strncmp(specifier, "lu", MAX_FORMAT)))
     {
-        parser.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
-        parser.get_arg = va_arg_ulong;
-        parser.parse_type = parse_ulong;
+        p.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
+        p.get_arg = va_arg_ulong;
+        p.parse_type = parse_ulong;
 
-        return parse_arg(args, &parser);
+        return parse_arg(args, &p);
     }
     else if (!(strncmp(specifier, "u", MAX_FORMAT)))
     {
-        parser.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
-        parser.get_arg = va_arg_uint;
-        parser.parse_type = parse_uint;
+        p.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
+        p.get_arg = va_arg_uint;
+        p.parse_type = parse_uint;
 
-        return parse_arg(args, &parser);
+        return parse_arg(args, &p);
     }
 
     return 0;
