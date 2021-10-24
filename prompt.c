@@ -306,14 +306,15 @@ static int parse_str(va_list *args, unsigned char parse_opt)
 
 static int parse_format(va_list *args, char *specifier, bool multple_specifiers)
 {
-    parser_t p;
-    p.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
-
     if (!(strncmp(specifier, "s", MAX_FORMAT)))
     {
         return parse_str(args, (multple_specifiers | STOP_AT_SPACE));
     }
-    else if (!(strncmp(specifier, "c", MAX_FORMAT)))
+
+    parser_t p;
+    p.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
+
+    if (!(strncmp(specifier, "c", MAX_FORMAT)))
     {
         p.parse_opt &= ~READ_NUMERICS_ONLY;
         p.get_arg = va_arg_char;
