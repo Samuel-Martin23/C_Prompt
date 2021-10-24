@@ -23,6 +23,10 @@
 #define STOP_AT_SPACE               2u
 #define READ_NUMERICS_ONLY          4u
 
+#define RED                         "\033[1;91m"
+#define WHITE                       "\033[1;97m"
+#define RESET                       "\033[0m"
+
 #define strchr_bool(s, c)           (bool)(strchr(s, c))
 
 typedef struct parser
@@ -362,7 +366,8 @@ static int parse_format(va_list *args, char *specifier, bool multple_specifiers)
     }
     else
     {
-        return 0;
+        printf("\nprompt: %serror:%s %%%s is not a specifier%s\n", RED, WHITE, specifier, RESET);
+        exit(EXIT_FAILURE);
     }
 
     return parse_arg(args, &p);
