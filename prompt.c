@@ -110,7 +110,8 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
     bool continue_reading = true;
     const size_t LAST_INDEX = MAX_SIZE - 1;
 
-    if (stream == stdin && !(parse_opt == NO_PARSE_OPT))
+    // If you are not using a getline function.
+    if (parse_opt != NO_PARSE_OPT)
     {
         while (ch == '\n' || ch == ' ')
         {
