@@ -23,6 +23,7 @@
 #define STOP_AT_SPACE               2u
 #define READ_NUMERICS_ONLY          4u
 
+#define PURPLE                      "\033[1;95m"
 #define RED                         "\033[1;91m"
 #define WHITE                       "\033[1;97m"
 #define RESET                       "\033[0m"
@@ -277,7 +278,8 @@ static int parse_arg(va_list *args, parser_t *p)
     {
         return EOF;
     }
-    else if (input[0] == '\0')
+
+    if (input[0] == '\0')
     {
         return 0;
     }
@@ -366,7 +368,7 @@ static int parse_format(va_list *args, char *specifier, bool multple_specifiers)
     }
     else
     {
-        printf("\nprompt: %serror:%s %%%s is not a specifier%s\n", RED, WHITE, specifier, RESET);
+        printf("\n%serror:%s %%%s is not a specifier%s\n", RED, WHITE, specifier, RESET);
         exit(EXIT_FAILURE);
     }
 
@@ -375,11 +377,18 @@ static int parse_format(va_list *args, char *specifier, bool multple_specifiers)
 
 int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, char *delim, bool matched_delim, FILE *stream)
 {
+    if (stream == stdout || stream == stderr)
+    {
+        printf("\n%swarning:%s can not use current stream for getline functions.%s\n", PURPLE, WHITE, RESET);
+        return 0;
+    }
+
     if (MAX_STR_SIZE == 0)
     {
         return 0;
     }
-    else if (feof(stream))
+
+    if (feof(stream))
     {
         return EOF;
     }
