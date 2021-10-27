@@ -282,6 +282,7 @@ static int parse_arg(va_list *args, parser_t *p)
 
     if (input[0] == '\0')
     {
+        printf("\n%swarning:%s user input was not read into a variable.%s\n", PURPLE, WHITE, RESET);
         return 0;
     }
 
