@@ -85,9 +85,9 @@ static bool is_numeric_rep(int c)
 
 static bool check_eof(int ch, bool *is_eof)
 {
-    bool condition = (ch == EOF && is_eof != NULL);
+    bool condition = (ch == EOF);
 
-    if (condition)
+    if (condition && is_eof != NULL)
     {
         *is_eof = true;
     }
