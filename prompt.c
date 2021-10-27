@@ -375,15 +375,20 @@ static int parse_format(va_list *args, char *specifier, bool multple_specifiers)
     return parse_arg(args, &p);
 }
 
-int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, char *delim, bool matched_delim, FILE *stream)
+static bool is_output_stream(FILE *stream)
 {
     if (stream == stdout || stream == stderr)
     {
         printf("\n%swarning:%s can not use current stream for getline functions.%s\n", PURPLE, WHITE, RESET);
-        return 0;
+        return true;
     }
 
-    if (MAX_STR_SIZE == 0)
+    return false;
+}
+
+int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, char *delim, bool matched_delim, FILE *stream)
+{
+    if (MAX_STR_SIZE == 0 || is_output_stream(stream))
     {
         return 0;
     }
