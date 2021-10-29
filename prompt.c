@@ -134,10 +134,13 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
             || ((parse_opt & READ_NUMERICS_ONLY) && !(is_numeric_rep(ch)))
             || is_strchr(delim, ch) == matched_delim)
         {
-            // Clearing the buffer.
-            while (ch != '\n' && ch != EOF)
+            if (stream == stdin)
             {
-                ch = getc(stream);
+                // Clearing the buffer.
+                while (ch != '\n' && ch != EOF)
+                {
+                    ch = getc(stream);
+                }
             }
 
             break;
