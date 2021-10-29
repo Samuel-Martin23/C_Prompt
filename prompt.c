@@ -28,8 +28,6 @@
 #define WHITE                       "\033[1;97m"
 #define RESET                       "\033[0m"
 
-#define strchr_bool(s, c)           (bool)(strchr(s, c))
-
 typedef struct parser
 {
     unsigned char parse_opt;
@@ -83,6 +81,11 @@ static bool is_numeric_rep(int c)
     return false;
 }
 
+static bool is_strchr(const char *s, int c)
+{
+    return (bool)(strchr(s, c));
+}
+
 static bool check_eof(int ch, bool *is_eof)
 {
     bool condition = (ch == EOF);
@@ -107,10 +110,10 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
     }
 
     size_t i = 0;
-    bool continue_reading = true;
     const size_t LAST_INDEX = MAX_SIZE - 1;
 
-    // If you are not using a getline function.
+    // If you are not using a getline function,
+    // we don't want to read any newlines or spaces first.
     if (parse_opt != NO_PARSE_OPT)
     {
         while (ch == '\n' || ch == ' ')
@@ -121,42 +124,32 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
 
     while (true)
     {
-        if (ch == '\n' || ch == EOF || ((parse_opt & MULTIPLE_SPECIFIERS) && ch == ' '))
+        if (ch == EOF || ((parse_opt & MULTIPLE_SPECIFIERS) && ch == ' '))
         {
-            check_eof(ch, is_eof);
             break;
         }
-        else if (continue_reading)
+
+        if (i == LAST_INDEX
+            || ((parse_opt & STOP_AT_SPACE) && ch == ' ')
+            || ((parse_opt & READ_NUMERICS_ONLY) && !(is_numeric_rep(ch)))
+            || is_strchr(delim, ch) == matched_delim)
         {
-            if (i == LAST_INDEX
-                || ((parse_opt & STOP_AT_SPACE) && ch == ' ')
-                || ((parse_opt & READ_NUMERICS_ONLY) && !(is_numeric_rep(ch)))
-                || strchr_bool(delim, ch) == matched_delim)
+            // Clearing the buffer.
+            while (ch != '\n' && ch != EOF)
             {
-                continue_reading = false;
+                ch = getc(stream);
             }
-            else
-            {
-                input[i++] = (char)ch;
-            }
+
+            break;
         }
 
+        input[i++] = (char)ch;
         ch = getc(stream);
     }
 
     input[i] = '\0';
 
-    // If you pass in multiple format specifiers
-    // and one of them fails.
-    if (((parse_opt & MULTIPLE_SPECIFIERS) && ch == ' ') && input[0] == '\0')
-    {
-        do
-        {
-            ch = getc(stream);
-        } while (ch != '\n' && ch != EOF);
-
-        check_eof(ch, is_eof);
-    }
+    check_eof(ch, is_eof);
 }
 
 static void *va_arg_uint(va_list *args) {return (void*)va_arg(*args, unsigned int*);}
@@ -273,7 +266,7 @@ static int parse_arg(va_list *args, parser_t *p)
     char input[MAX_READ] = {0};
     void *arg_value = p->get_arg(args);
 
-    parse_prompt(input, MAX_READ, p->parse_opt, "", true, &is_eof, stdin);
+    parse_prompt(input, MAX_READ, p->parse_opt, "\n", true, &is_eof, stdin);
 
     if (is_eof)
     {
@@ -282,7 +275,7 @@ static int parse_arg(va_list *args, parser_t *p)
 
     if (input[0] == '\0')
     {
-        printf("\n%swarning:%s user input was not read into a variable.%s\n", PURPLE, WHITE, RESET);
+        printf("\n%swarning:%s user input was not read into a variable or variables.%s\n", PURPLE, WHITE, RESET);
         return 0;
     }
 
@@ -302,7 +295,7 @@ static int parse_str(va_list *args, unsigned char parse_opt)
         return 0;
     }
 
-    parse_prompt(input, MAX_STR_SIZE, parse_opt, "", true, &is_eof, stdin);
+    parse_prompt(input, MAX_STR_SIZE, parse_opt, "\n", true, &is_eof, stdin);
 
     if (is_eof)
     {
@@ -409,7 +402,7 @@ int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_
 
 int prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE, FILE *stream)
 {
-    return prompt_getline_delim(message, input, MAX_STR_SIZE, "", true, stream);
+    return prompt_getline_delim(message, input, MAX_STR_SIZE, "\n", true, stream);
 }
 
 int prompt(const char *message, const char *format, ...)
