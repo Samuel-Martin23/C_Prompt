@@ -76,7 +76,8 @@ static char *alloc_str(const char *s)
 
 static bool is_not_numeric(int c, uint8_t parse_opt, uint8_t *read_opt)
 {
-    if ((parse_opt & NUMERICS_ONLY) && !((c >= '0' && c <= '9') || c == '.' || c == '-'))
+    if ((parse_opt & NUMERICS_ONLY)
+        && !((c >= '0' && c <= '9') || c == '.' || c == '-'))
     {
         if (read_opt)
         {
@@ -108,13 +109,14 @@ static bool check_eof(int ch, uint8_t *read_opt)
 
 // This function was inspired by this video:
 // https://youtu.be/NsB6dqvVu7Y?t=231
-static void parse_prompt(char *input, const size_t MAX_SIZE, uint8_t parse_opt, char *delim, bool matched_delim, uint8_t *read_opt, FILE *stream)
+static uint8_t parse_prompt(char *input, const size_t MAX_SIZE, uint8_t parse_opt, char *delim, bool matched_delim, FILE *stream)
 {
     int ch = getc(stream);
+    uint8_t read_opt = NO_READ_OPT;
     
-    if (check_eof(ch, read_opt))
+    if (check_eof(ch, &read_opt))
     {
-        return;
+        return read_opt;
     }
 
     size_t i = 0;
@@ -139,7 +141,7 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, uint8_t parse_opt, 
 
         if (i == LAST_INDEX
             || ((parse_opt & STOP_AT_SPACE) && ch == ' ')
-            || is_not_numeric(ch, parse_opt, read_opt)
+            || is_not_numeric(ch, parse_opt, &read_opt)
             || is_strchr(delim, ch) == matched_delim)
         {
             if (stream == stdin)
@@ -160,7 +162,9 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, uint8_t parse_opt, 
 
     input[i] = '\0';
 
-    check_eof(ch, read_opt);
+    check_eof(ch, &read_opt);
+
+    return read_opt;
 }
 
 static void *va_arg_uint(va_list *args) {return (void*)va_arg(*args, unsigned int*);}
@@ -275,9 +279,7 @@ static int parse_arg(va_list *args, parser_t *p)
 {
     char input[MAX_READ] = {0};
     void *arg_value = p->get_arg(args);
-    uint8_t read_opt = NO_READ_OPT;
-
-    parse_prompt(input, MAX_READ, p->parse_opt, "\n", true, &read_opt, stdin);
+    uint8_t read_opt = parse_prompt(input, MAX_READ, p->parse_opt, "\n", true, stdin);
 
     if (read_opt & EOF_STREAM)
     {
@@ -303,14 +305,13 @@ static int parse_str(va_list *args, uint8_t parse_opt)
 {
     char *input = va_arg(*args, char*);
     const size_t MAX_STR_SIZE = va_arg(*args, size_t);
-    uint8_t read_opt = NO_READ_OPT;
 
     if (MAX_STR_SIZE == 0)
     {
         return READ_FAILURE;
     }
 
-    parse_prompt(input, MAX_STR_SIZE, parse_opt, "\n", true, &read_opt, stdin);
+    uint8_t read_opt = parse_prompt(input, MAX_STR_SIZE, parse_opt, "\n", true, stdin);
 
     if (read_opt & EOF_STREAM)
     {
@@ -419,7 +420,7 @@ int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_
 
     printf("%s", message);
 
-    parse_prompt(input, MAX_STR_SIZE, NO_PARSE_OPT, delim, matched_delim, NULL, stream);
+    parse_prompt(input, MAX_STR_SIZE, NO_PARSE_OPT, delim, matched_delim, stream);
 
     return READ_SUCCESS;
 }
