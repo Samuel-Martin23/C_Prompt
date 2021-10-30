@@ -21,16 +21,19 @@
 #define NO_PARSE_OPT                0u
 #define MULTIPLE_SPECIFIERS         1u
 #define STOP_AT_SPACE               2u
-#define READ_NUMERICS_ONLY          4u
+#define NUMERICS_ONLY               4u
 
-#define PURPLE                      "\033[1;95m"
-#define RED                         "\033[1;91m"
-#define WHITE                       "\033[1;97m"
-#define RESET                       "\033[0m"
+#define NO_READ_OPT                 0u
+#define EOF_STREAM                  1u
+#define NON_NUMERIC                 2u
+
+#define READ_FAILURE                0
+#define READ_SUCCESS                1
+#define READ_BAD_CHAR               2
 
 typedef struct parser
 {
-    unsigned char parse_opt;
+    uint8_t parse_opt;
     void *(*get_arg)(va_list *args);
     void (*parse_type)(const char *str, void *arg);
 } parser_t;
@@ -71,10 +74,15 @@ static char *alloc_str(const char *s)
     return str;
 }
 
-static bool is_numeric_rep(int c)
+static bool is_not_numeric(int c, uint8_t parse_opt, uint8_t *read_opt)
 {
-    if ((c >= '0' && c <= '9') || c == '.' || c == '-')
+    if ((parse_opt & NUMERICS_ONLY) && !((c >= '0' && c <= '9') || c == '.' || c == '-'))
     {
+        if (read_opt)
+        {
+            *read_opt |= NON_NUMERIC;
+        }
+
         return true;
     }
 
@@ -86,13 +94,13 @@ static bool is_strchr(const char *s, int c)
     return (bool)(strchr(s, c));
 }
 
-static bool check_eof(int ch, bool *is_eof)
+static bool check_eof(int ch, uint8_t *read_opt)
 {
     bool condition = (ch == EOF);
 
-    if (condition && is_eof != NULL)
+    if (condition && read_opt)
     {
-        *is_eof = true;
+        *read_opt |= EOF_STREAM;
     }
 
     return condition;
@@ -100,11 +108,11 @@ static bool check_eof(int ch, bool *is_eof)
 
 // This function was inspired by this video:
 // https://youtu.be/NsB6dqvVu7Y?t=231
-static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse_opt, char *delim, bool matched_delim, bool *is_eof, FILE *stream)
+static void parse_prompt(char *input, const size_t MAX_SIZE, uint8_t parse_opt, char *delim, bool matched_delim, uint8_t *read_opt, FILE *stream)
 {
     int ch = getc(stream);
     
-    if (check_eof(ch, is_eof))
+    if (check_eof(ch, read_opt))
     {
         return;
     }
@@ -131,7 +139,7 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
 
         if (i == LAST_INDEX
             || ((parse_opt & STOP_AT_SPACE) && ch == ' ')
-            || ((parse_opt & READ_NUMERICS_ONLY) && !(is_numeric_rep(ch)))
+            || is_not_numeric(ch, parse_opt, read_opt)
             || is_strchr(delim, ch) == matched_delim)
         {
             if (stream == stdin)
@@ -152,7 +160,7 @@ static void parse_prompt(char *input, const size_t MAX_SIZE, unsigned char parse
 
     input[i] = '\0';
 
-    check_eof(ch, is_eof);
+    check_eof(ch, read_opt);
 }
 
 static void *va_arg_uint(va_list *args) {return (void*)va_arg(*args, unsigned int*);}
@@ -265,47 +273,51 @@ static void parse_char(const char *str, void *arg)
 
 static int parse_arg(va_list *args, parser_t *p)
 {
-    bool is_eof = false;
     char input[MAX_READ] = {0};
     void *arg_value = p->get_arg(args);
+    uint8_t read_opt = NO_READ_OPT;
 
-    parse_prompt(input, MAX_READ, p->parse_opt, "\n", true, &is_eof, stdin);
+    parse_prompt(input, MAX_READ, p->parse_opt, "\n", true, &read_opt, stdin);
 
-    if (is_eof)
+    if (read_opt & EOF_STREAM)
     {
         return EOF;
     }
 
     if (input[0] == '\0')
     {
-        printf("\n%swarning:%s user input was not read into a variable or variables.%s\n", PURPLE, WHITE, RESET);
-        return 0;
+        return READ_FAILURE;
     }
 
     p->parse_type(input, arg_value);
 
-    return 1;
+    if (read_opt & NON_NUMERIC)
+    {
+        return READ_BAD_CHAR;
+    }
+
+    return READ_SUCCESS;
 }
 
-static int parse_str(va_list *args, unsigned char parse_opt)
+static int parse_str(va_list *args, uint8_t parse_opt)
 {
-    bool is_eof = false;
     char *input = va_arg(*args, char*);
     const size_t MAX_STR_SIZE = va_arg(*args, size_t);
+    uint8_t read_opt = NO_READ_OPT;
 
     if (MAX_STR_SIZE == 0)
     {
-        return 0;
+        return READ_FAILURE;
     }
 
-    parse_prompt(input, MAX_STR_SIZE, parse_opt, "\n", true, &is_eof, stdin);
+    parse_prompt(input, MAX_STR_SIZE, parse_opt, "\n", true, &read_opt, stdin);
 
-    if (is_eof)
+    if (read_opt & EOF_STREAM)
     {
         return EOF;
     }
 
-    return 1;
+    return READ_SUCCESS;
 }
 
 static int parse_format(va_list *args, char *specifier, bool multple_specifiers)
@@ -316,11 +328,11 @@ static int parse_format(va_list *args, char *specifier, bool multple_specifiers)
     }
 
     parser_t p;
-    p.parse_opt = (multple_specifiers | STOP_AT_SPACE | READ_NUMERICS_ONLY);
+    p.parse_opt = (multple_specifiers | STOP_AT_SPACE | NUMERICS_ONLY);
 
     if (!(strncmp(specifier, "c", MAX_FORMAT)))
     {
-        p.parse_opt &= ~READ_NUMERICS_ONLY;
+        p.parse_opt &= ~NUMERICS_ONLY;
         p.get_arg = va_arg_char;
         p.parse_type = parse_char;
     }
@@ -366,7 +378,6 @@ static int parse_format(va_list *args, char *specifier, bool multple_specifiers)
     }
     else
     {
-        printf("\n%serror:%s %%%s is not a specifier%s\n", RED, WHITE, specifier, RESET);
         exit(EXIT_FAILURE);
     }
 
@@ -377,7 +388,17 @@ static bool is_output_stream(FILE *stream)
 {
     if (stream == stdout || stream == stderr)
     {
-        printf("\n%swarning:%s can not use current stream for getline functions.%s\n", PURPLE, WHITE, RESET);
+        return true;
+    }
+
+    return false;
+}
+
+static bool is_bad_char(int result, int *num_reads)
+{
+    if (result == READ_BAD_CHAR)
+    {
+        (*num_reads)++;
         return true;
     }
 
@@ -388,7 +409,7 @@ int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_
 {
     if (MAX_STR_SIZE == 0 || is_output_stream(stream))
     {
-        return 0;
+        return READ_FAILURE;
     }
 
     if (feof(stream))
@@ -400,7 +421,7 @@ int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_
 
     parse_prompt(input, MAX_STR_SIZE, NO_PARSE_OPT, delim, matched_delim, NULL, stream);
 
-    return 1;
+    return READ_SUCCESS;
 }
 
 int prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE, FILE *stream)
@@ -426,7 +447,9 @@ int prompt(const char *message, const char *format, ...)
         specifier = strsep_chars(&format_copy, "%");
         result = parse_format(&args, specifier, (format_copy != NULL));
 
-        if (result == EOF || result == 0)
+        if (result == EOF 
+            || result == READ_FAILURE 
+            || is_bad_char(result, &successfully_read))
         {
             break;
         }
