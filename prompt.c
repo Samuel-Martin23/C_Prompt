@@ -161,8 +161,7 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
             break;
         }
 
-        if (i == LAST_INDEX
-            || is_space(ch, parse)
+        if (is_space(ch, parse)
             || is_not_numeric(ch, parse)
             || is_strchr(delim, ch) == matched_delim)
         {
@@ -178,7 +177,11 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
             break;
         }
 
-        input[i++] = (char)ch;
+        if (i != LAST_INDEX)
+        {
+            input[i++] = (char)ch;
+        }
+
         ch = getc(stream);
     }
 
