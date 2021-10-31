@@ -130,7 +130,7 @@ static bool check_eof(int ch, parser_t *parse)
 
 // This function was inspired by this video:
 // https://youtu.be/NsB6dqvVu7Y?t=231
-static void parse_prompt(char *input, const size_t MAX_SIZE, parser_t *parse, char *delim, bool matched_delim, FILE *stream)
+static void parse_prompt(char *input, const size_t MAX_SIZE, parser_t *parse, const char *delim, bool matched_delim, FILE *stream)
 {
     int ch = getc(stream);
     
@@ -431,7 +431,7 @@ static bool is_output_stream(FILE *stream)
     return false;
 }
 
-int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, char *delim, bool matched_delim, FILE *stream)
+int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, const char *delim, bool matched_delim, FILE *stream)
 {
     if (MAX_STR_SIZE == 0 || is_output_stream(stream))
     {
