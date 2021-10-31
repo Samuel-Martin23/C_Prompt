@@ -130,7 +130,9 @@ static bool check_eof(int ch, parser_t *parse)
 
 // This function was inspired by this video:
 // https://youtu.be/NsB6dqvVu7Y?t=231
-static void parse_prompt(char *input, const size_t MAX_SIZE, parser_t *parse, const char *delim, bool matched_delim, FILE *stream)
+static void parse_prompt(char *input, const size_t MAX_SIZE,
+    parser_t *parse, const char *delim,
+    const bool matched_delim, FILE *stream)
 {
     int ch = getc(stream);
     
@@ -340,7 +342,8 @@ static read_status_t parse_types(va_list *args, parser_t *parse)
     return READ_SUCCESS;
 }
 
-static read_status_t parse_format(va_list *args, char *specifier, bool multple_specifiers, int *successfully_read)
+static read_status_t parse_format(va_list *args, char *specifier,
+    bool multple_specifiers, int *successfully_read)
 {
     parser_t parse;
     read_status_t result = READ_FAILURE;
@@ -431,7 +434,9 @@ static bool is_output_stream(FILE *stream)
     return false;
 }
 
-int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, const char *delim, bool matched_delim, FILE *stream)
+int prompt_getline_delim(const char *message, char *input,
+    const size_t MAX_STR_SIZE, const char *delim,
+    bool matched_delim, FILE *stream)
 {
     if (MAX_STR_SIZE == 0 || is_output_stream(stream))
     {
@@ -450,7 +455,8 @@ int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_
     return READ_SUCCESS;
 }
 
-int prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE, FILE *stream)
+int prompt_getline(const char *message, char *input,
+    const size_t MAX_STR_SIZE, FILE *stream)
 {
     return prompt_getline_delim(message, input, MAX_STR_SIZE, "\n", true, stream);
 }
@@ -471,7 +477,8 @@ int prompt(const char *message, const char *format, ...)
     while (format_copy != NULL)
     {
         specifier = strsep_chars(&format_copy, "%");
-        result = parse_format(&args, specifier, (format_copy != NULL), &successfully_read);
+        result = parse_format(&args, specifier,
+                    (format_copy != NULL), &successfully_read);
 
         if (result != READ_SUCCESS)
         {

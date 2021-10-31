@@ -58,8 +58,13 @@ the code look cleaner imo.
 #include <limits.h>
 #endif
 
-int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_SIZE, const char *delim, bool matched_delim, FILE *stream);
-int prompt_getline(const char *message, char *input, const size_t MAX_STR_SIZE, FILE *stream);
+int prompt_getline_delim(const char *message, char *input,
+    const size_t MAX_STR_SIZE, const char *delim,
+    bool matched_delim, FILE *stream);
+
+int prompt_getline(const char *message, char *input,
+    const size_t MAX_STR_SIZE, FILE *stream);
+
 int prompt(const char *message, const char *format, ...);
 
 #endif /* PROMPT_H */
