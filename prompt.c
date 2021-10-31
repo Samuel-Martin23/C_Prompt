@@ -18,24 +18,29 @@
 
 #define MAX_FORMAT                  2u
 
-#define NO_PARSE_OPT                0u
 #define MULTIPLE_SPECIFIERS         1u
 #define STOP_AT_SPACE               2u
 #define NUMERICS_ONLY               4u
 
-#define NO_READ_OPT                 0u
+#define NO_STATUS                   0u
 #define EOF_STREAM                  1u
-#define NON_NUMERIC                 2u
+#define NOT_NUMERIC                 2u
 
-#define READ_FAILURE                0
-#define READ_SUCCESS                1
-#define READ_BAD_CHAR               2
+typedef enum read_status
+{
+    READ_EOF = -1,
+    READ_FAILURE,
+    READ_SUCCESS,
+    READ_BAD_CHAR
+} read_status_t;
 
 typedef struct parser
 {
-    uint8_t parse_opt;
+    unsigned char status;
+    unsigned char options;
     void *(*get_arg)(va_list *args);
-    void (*parse_type)(const char *str, void *arg);
+    void (*assign_to_arg)(const char *str, void *arg);
+    read_status_t (*read_in_arg)(va_list *args, struct parser *parse);
 } parser_t;
 
 // Separates a str with a multi-character delimiter.
@@ -74,34 +79,50 @@ static char *alloc_str(const char *s)
     return str;
 }
 
-static bool is_not_numeric(int c, uint8_t parse_opt, uint8_t *read_opt)
+static bool is_strchr(const char *s, int c)
 {
-    if ((parse_opt & NUMERICS_ONLY)
-        && !((c >= '0' && c <= '9') || c == '.' || c == '-'))
-    {
-        if (read_opt)
-        {
-            *read_opt |= NON_NUMERIC;
-        }
+    return (bool)(strchr(s, c));
+}
 
+static bool is_not_numeric(int ch, parser_t *parse)
+{
+    if (parse && (parse->options & NUMERICS_ONLY)
+        && !((ch >= '0' && ch <= '9') || ch == '.' || ch == '-'))
+    {
+        parse->status |= NOT_NUMERIC;
         return true;
     }
 
     return false;
 }
 
-static bool is_strchr(const char *s, int c)
+static bool is_space(int ch, parser_t *parse)
 {
-    return (bool)(strchr(s, c));
+    if (parse && (parse->options & STOP_AT_SPACE) && ch == ' ')
+    {
+        return true;
+    }
+
+    return false;
 }
 
-static bool check_eof(int ch, uint8_t *read_opt)
+static bool is_multiple_specifiers(int ch, parser_t *parse)
+{
+    if (parse && (parse->options & MULTIPLE_SPECIFIERS) && ch == ' ')
+    {
+        return true;
+    }
+
+    return false;
+}
+
+static bool check_eof(int ch, parser_t *parse)
 {
     bool condition = (ch == EOF);
 
-    if (condition && read_opt)
+    if (parse && condition)
     {
-        *read_opt |= EOF_STREAM;
+        parse->status |= EOF_STREAM;
     }
 
     return condition;
@@ -109,14 +130,13 @@ static bool check_eof(int ch, uint8_t *read_opt)
 
 // This function was inspired by this video:
 // https://youtu.be/NsB6dqvVu7Y?t=231
-static uint8_t parse_prompt(char *input, const size_t MAX_SIZE, uint8_t parse_opt, char *delim, bool matched_delim, FILE *stream)
+static void parse_prompt(char *input, const size_t MAX_SIZE, parser_t *parse, char *delim, bool matched_delim, FILE *stream)
 {
     int ch = getc(stream);
-    uint8_t read_opt = NO_READ_OPT;
     
-    if (check_eof(ch, &read_opt))
+    if (check_eof(ch, parse))
     {
-        return read_opt;
+        return;
     }
 
     size_t i = 0;
@@ -124,7 +144,7 @@ static uint8_t parse_prompt(char *input, const size_t MAX_SIZE, uint8_t parse_op
 
     // If you are not using a getline function,
     // we don't want to read any newlines or spaces first.
-    if (parse_opt != NO_PARSE_OPT)
+    if (parse)
     {
         while (ch == '\n' || ch == ' ')
         {
@@ -134,14 +154,14 @@ static uint8_t parse_prompt(char *input, const size_t MAX_SIZE, uint8_t parse_op
 
     while (true)
     {
-        if (ch == EOF || ((parse_opt & MULTIPLE_SPECIFIERS) && ch == ' '))
+        if (ch == EOF || is_multiple_specifiers(ch, parse))
         {
             break;
         }
 
         if (i == LAST_INDEX
-            || ((parse_opt & STOP_AT_SPACE) && ch == ' ')
-            || is_not_numeric(ch, parse_opt, &read_opt)
+            || is_space(ch, parse)
+            || is_not_numeric(ch, parse)
             || is_strchr(delim, ch) == matched_delim)
         {
             if (stream == stdin)
@@ -162,9 +182,7 @@ static uint8_t parse_prompt(char *input, const size_t MAX_SIZE, uint8_t parse_op
 
     input[i] = '\0';
 
-    check_eof(ch, &read_opt);
-
-    return read_opt;
+    check_eof(ch, parse);
 }
 
 static void *va_arg_uint(va_list *args) {return (void*)va_arg(*args, unsigned int*);}
@@ -176,6 +194,26 @@ static void *va_arg_short(va_list *args) {return (void*)va_arg(*args, short*);}
 static void *va_arg_float(va_list *args) {return (void*)va_arg(*args, float*);}
 static void *va_arg_int(va_list *args) {return (void*)va_arg(*args, int*);}
 static void *va_arg_char(va_list *args) {return (void*)va_arg(*args, char*);}
+
+static read_status_t parse_str(va_list *args, parser_t *parse)
+{
+    char *input = va_arg(*args, char*);
+    const size_t MAX_STR_SIZE = va_arg(*args, size_t);
+
+    if (MAX_STR_SIZE == 0)
+    {
+        return READ_FAILURE;
+    }
+
+    parse_prompt(input, MAX_STR_SIZE, parse, "\n", true, stdin);
+
+    if (parse->status & EOF_STREAM)
+    {
+        return READ_EOF;
+    }
+
+    return READ_SUCCESS;
+}
 
 static void parse_uint(const char *str, void *arg) 
 {
@@ -275,15 +313,16 @@ static void parse_char(const char *str, void *arg)
     *char_arg = str[0];
 }
 
-static int parse_arg(va_list *args, parser_t *p)
+static read_status_t parse_types(va_list *args, parser_t *parse)
 {
     char input[MAX_READ] = {0};
-    void *arg_value = p->get_arg(args);
-    uint8_t read_opt = parse_prompt(input, MAX_READ, p->parse_opt, "\n", true, stdin);
+    void *arg_value = parse->get_arg(args);
 
-    if (read_opt & EOF_STREAM)
+    parse_prompt(input, MAX_READ, parse, "\n", true, stdin);
+
+    if (parse->status & EOF_STREAM)
     {
-        return EOF;
+        return READ_EOF;
     }
 
     if (input[0] == '\0')
@@ -291,9 +330,9 @@ static int parse_arg(va_list *args, parser_t *p)
         return READ_FAILURE;
     }
 
-    p->parse_type(input, arg_value);
+    parse->assign_to_arg(input, arg_value);
 
-    if (read_opt & NON_NUMERIC)
+    if (parse->status & NOT_NUMERIC)
     {
         return READ_BAD_CHAR;
     }
@@ -301,105 +340,91 @@ static int parse_arg(va_list *args, parser_t *p)
     return READ_SUCCESS;
 }
 
-static int parse_str(va_list *args, uint8_t parse_opt)
+static read_status_t parse_format(va_list *args, char *specifier, bool multple_specifiers, int *successfully_read)
 {
-    char *input = va_arg(*args, char*);
-    const size_t MAX_STR_SIZE = va_arg(*args, size_t);
+    parser_t parse;
+    read_status_t result = READ_FAILURE;
 
-    if (MAX_STR_SIZE == 0)
-    {
-        return READ_FAILURE;
-    }
-
-    uint8_t read_opt = parse_prompt(input, MAX_STR_SIZE, parse_opt, "\n", true, stdin);
-
-    if (read_opt & EOF_STREAM)
-    {
-        return EOF;
-    }
-
-    return READ_SUCCESS;
-}
-
-static int parse_format(va_list *args, char *specifier, bool multple_specifiers)
-{
-    if (!(strncmp(specifier, "s", MAX_FORMAT)))
-    {
-        return parse_str(args, (multple_specifiers | STOP_AT_SPACE));
-    }
-
-    parser_t p;
-    p.parse_opt = (multple_specifiers | STOP_AT_SPACE | NUMERICS_ONLY);
+    parse.status = NO_STATUS;
+    parse.options = (multple_specifiers | STOP_AT_SPACE | NUMERICS_ONLY);
+    parse.read_in_arg = parse_types;
 
     if (!(strncmp(specifier, "c", MAX_FORMAT)))
     {
-        p.parse_opt &= ~NUMERICS_ONLY;
-        p.get_arg = va_arg_char;
-        p.parse_type = parse_char;
+        parse.options &= ~NUMERICS_ONLY;
+        parse.get_arg = va_arg_char;
+        parse.assign_to_arg = parse_char;
     }
     else if (!(strncmp(specifier, "d", MAX_FORMAT)))
     {
-        p.get_arg = va_arg_int;
-        p.parse_type = parse_int;
+        parse.get_arg = va_arg_int;
+        parse.assign_to_arg = parse_int;
     }
     else if (!(strncmp(specifier, "f", MAX_FORMAT)))
     {
-        p.get_arg = va_arg_float;
-        p.parse_type = parse_float;
+        parse.get_arg = va_arg_float;
+        parse.assign_to_arg = parse_float;
     }
     else if (!(strncmp(specifier, "hi", MAX_FORMAT)))
     {
-        p.get_arg = va_arg_short;
-        p.parse_type = parse_short;
+        parse.get_arg = va_arg_short;
+        parse.assign_to_arg = parse_short;
     }
     else if (!(strncmp(specifier, "hu", MAX_FORMAT)))
     {
-        p.get_arg = va_arg_ushort;
-        p.parse_type = parse_ushort;
+        parse.get_arg = va_arg_ushort;
+        parse.assign_to_arg = parse_ushort;
     }
     else if (!(strncmp(specifier, "ld", MAX_FORMAT)))
     {
-        p.get_arg = va_arg_long;
-        p.parse_type = parse_long;
+        parse.get_arg = va_arg_long;
+        parse.assign_to_arg = parse_long;
     }
     else if (!(strncmp(specifier, "lf", MAX_FORMAT)))
     {
-        p.get_arg = va_arg_double;
-        p.parse_type = parse_double;
+        parse.get_arg = va_arg_double;
+        parse.assign_to_arg = parse_double;
     }
     else if (!(strncmp(specifier, "lu", MAX_FORMAT)))
     {
-        p.get_arg = va_arg_ulong;
-        p.parse_type = parse_ulong;
+        parse.get_arg = va_arg_ulong;
+        parse.assign_to_arg = parse_ulong;
     }
     else if (!(strncmp(specifier, "u", MAX_FORMAT)))
     {
-        p.get_arg = va_arg_uint;
-        p.parse_type = parse_uint;
+        parse.get_arg = va_arg_uint;
+        parse.assign_to_arg = parse_uint;
+    }
+    else if (!(strncmp(specifier, "s", MAX_FORMAT)))
+    {
+        parse.options &= ~NUMERICS_ONLY;
+        parse.read_in_arg = parse_str;
     }
     else
     {
         exit(EXIT_FAILURE);
     }
 
-    return parse_arg(args, &p);
+    result = parse.read_in_arg(args, &parse);
+    
+    // If the user enters in a series of numbers like:
+    // 12L 5 9
+    // we still want to read in '12' and also increament 
+    // our successfully read counter. However we discard the
+    // rest of the input because of the 'L' and stop reading
+    // all together.
+    if (result >= READ_SUCCESS)
+    {
+        (*successfully_read)++;
+    }
+
+    return result;
 }
 
 static bool is_output_stream(FILE *stream)
 {
     if (stream == stdout || stream == stderr)
     {
-        return true;
-    }
-
-    return false;
-}
-
-static bool is_bad_char(int result, int *num_reads)
-{
-    if (result == READ_BAD_CHAR)
-    {
-        (*num_reads)++;
         return true;
     }
 
@@ -415,12 +440,12 @@ int prompt_getline_delim(const char *message, char *input, const size_t MAX_STR_
 
     if (feof(stream))
     {
-        return EOF;
+        return READ_EOF;
     }
 
     printf("%s", message);
 
-    parse_prompt(input, MAX_STR_SIZE, NO_PARSE_OPT, delim, matched_delim, stream);
+    parse_prompt(input, MAX_STR_SIZE, NULL, delim, matched_delim, stream);
 
     return READ_SUCCESS;
 }
@@ -434,11 +459,11 @@ int prompt(const char *message, const char *format, ...)
 {
     printf("%s", message);
 
-    int result = 0;
     int successfully_read = 0;
     char *format_alloc = alloc_str(format);
     char *format_copy = format_alloc;
     char *specifier = strsep_chars(&format_copy, "%");
+    read_status_t result = READ_FAILURE;
 
     va_list args;
     va_start(args, format);
@@ -446,20 +471,16 @@ int prompt(const char *message, const char *format, ...)
     while (format_copy != NULL)
     {
         specifier = strsep_chars(&format_copy, "%");
-        result = parse_format(&args, specifier, (format_copy != NULL));
+        result = parse_format(&args, specifier, (format_copy != NULL), &successfully_read);
 
-        if (result == EOF 
-            || result == READ_FAILURE 
-            || is_bad_char(result, &successfully_read))
+        if (result != READ_SUCCESS)
         {
             break;
         }
-
-        successfully_read += result;
     }
 
     va_end(args);
     free(format_alloc);
 
-    return (result == EOF) ? EOF : successfully_read;
+    return (result == READ_EOF) ? READ_EOF : successfully_read;
 }

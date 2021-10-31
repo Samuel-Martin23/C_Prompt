@@ -32,10 +32,11 @@ a delim, and matched_delim. delim is a char* as
 I wanted a way for the user to pass in multiple delims. The order of
 the delim does not matter. matched_delim is a bool that will
 exclude(true) or include(false) the delim.
-For example, if the delim is "01" and the matched_delim is true,
-then it will stop reading when it encounters a '0' or a '1'.
-However, if matched_delim is false, then it will stop reading
-only when it encounters a char that is NOT a '0' or a '1'.
+For example, if the delim is "01\n" and the matched_delim is true,
+then it will stop reading when it encounters a '0', '1', or a '\n'.
+However, if the delim was "01" and the matched_delim is false,
+then it will stop reading only when it encounters a char 
+that is NOT a '0' or a '1'.
 
 6. The prompt functions have an additional parameter for
 printing out your message to the user instead of calling printf
