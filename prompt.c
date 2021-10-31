@@ -84,7 +84,7 @@ static bool is_strchr(const char *s, int c)
     return (bool)(strchr(s, c));
 }
 
-static bool is_not_numeric(const int ch, parser_t *parse)
+static bool is_not_numeric(parser_t *parse, int ch)
 {
     if (parse && (parse->options & NUMERICS_ONLY)
         && !((ch >= '0' && ch <= '9') || ch == '.' || ch == '-'))
@@ -96,7 +96,7 @@ static bool is_not_numeric(const int ch, parser_t *parse)
     return false;
 }
 
-static bool is_space(const int ch, parser_t *parse)
+static bool is_space(parser_t *parse, int ch)
 {
     if (parse && (parse->options & STOP_AT_SPACE) && ch == ' ')
     {
@@ -106,7 +106,7 @@ static bool is_space(const int ch, parser_t *parse)
     return false;
 }
 
-static bool is_multiple_specifiers(const int ch, parser_t *parse)
+static bool is_multiple_specifiers(parser_t *parse, int ch)
 {
     if (parse && (parse->options & MULTIPLE_SPECIFIERS) && ch == ' ')
     {
@@ -116,7 +116,7 @@ static bool is_multiple_specifiers(const int ch, parser_t *parse)
     return false;
 }
 
-static bool check_eof(const int ch, parser_t *parse)
+static bool check_eof(parser_t *parse, int ch)
 {
     bool condition = (ch == EOF);
 
@@ -132,11 +132,11 @@ static bool check_eof(const int ch, parser_t *parse)
 // https://youtu.be/NsB6dqvVu7Y?t=231
 static void parse_prompt(char *input, const size_t MAX_SIZE,
     parser_t *parse, const char *delim,
-    const bool matched_delim, FILE *stream)
+    bool matched_delim, FILE *stream)
 {
     int ch = getc(stream);
     
-    if (check_eof(ch, parse))
+    if (check_eof(parse, ch))
     {
         return;
     }
@@ -156,13 +156,13 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
 
     while (true)
     {
-        if (ch == EOF || is_multiple_specifiers(ch, parse))
+        if (ch == EOF || is_multiple_specifiers(parse, ch))
         {
             break;
         }
 
-        if (is_space(ch, parse)
-            || is_not_numeric(ch, parse)
+        if (is_space(parse, ch)
+            || is_not_numeric(parse, ch)
             || is_strchr(delim, ch) == matched_delim)
         {
             if (stream == stdin)
@@ -187,7 +187,7 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
 
     input[i] = '\0';
 
-    check_eof(ch, parse);
+    check_eof(parse, ch);
 }
 
 static void *va_arg_uint(va_list *args) {return (void*)va_arg(*args, unsigned int*);}
@@ -346,7 +346,7 @@ static read_status_t parse_types(va_list *args, parser_t *parse)
 }
 
 static read_status_t parse_format(va_list *args, const char *specifier,
-    const bool multple_specifiers, int *successfully_read)
+    bool multple_specifiers, int *successfully_read)
 {
     parser_t parse;
     read_status_t result = READ_FAILURE;
