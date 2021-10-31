@@ -40,8 +40,9 @@ typedef struct parser
     unsigned char options;
     void *(*get_arg)(va_list *args);
     void (*assign_to_arg)(const char *str, void *arg);
-    read_status_t (*read_in_arg)(va_list *args, struct parser *parse);
 } parser_t;
+
+typedef read_status_t (*parse_arg_t)(va_list *args, parser_t *parse);
 
 // Separates a str with a multi-character delimiter.
 static char *strsep_chars(char **data, const char *separator) 
@@ -349,11 +350,11 @@ static read_status_t parse_format(va_list *args, const char *specifier,
     bool multple_specifiers, int *successfully_read)
 {
     parser_t parse;
+    parse_arg_t read_in_arg = parse_types;
     read_status_t result = READ_FAILURE;
 
     parse.status = NO_STATUS;
     parse.options = (multple_specifiers | STOP_AT_SPACE | NUMERICS_ONLY);
-    parse.read_in_arg = parse_types;
 
     if (!(strncmp(specifier, "c", MAX_FORMAT)))
     {
@@ -404,14 +405,14 @@ static read_status_t parse_format(va_list *args, const char *specifier,
     else if (!(strncmp(specifier, "s", MAX_FORMAT)))
     {
         parse.options &= ~NUMERICS_ONLY;
-        parse.read_in_arg = parse_str;
+        read_in_arg = parse_str;
     }
     else
     {
         exit(EXIT_FAILURE);
     }
 
-    result = parse.read_in_arg(args, &parse);
+    result = read_in_arg(args, &parse);
     
     // If the user enters in a series of numbers like:
     // 12L 5 9
