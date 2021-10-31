@@ -84,7 +84,7 @@ static bool is_strchr(const char *s, int c)
     return (bool)(strchr(s, c));
 }
 
-static bool is_not_numeric(int ch, parser_t *parse)
+static bool is_not_numeric(const int ch, parser_t *parse)
 {
     if (parse && (parse->options & NUMERICS_ONLY)
         && !((ch >= '0' && ch <= '9') || ch == '.' || ch == '-'))
@@ -96,7 +96,7 @@ static bool is_not_numeric(int ch, parser_t *parse)
     return false;
 }
 
-static bool is_space(int ch, parser_t *parse)
+static bool is_space(const int ch, parser_t *parse)
 {
     if (parse && (parse->options & STOP_AT_SPACE) && ch == ' ')
     {
@@ -106,7 +106,7 @@ static bool is_space(int ch, parser_t *parse)
     return false;
 }
 
-static bool is_multiple_specifiers(int ch, parser_t *parse)
+static bool is_multiple_specifiers(const int ch, parser_t *parse)
 {
     if (parse && (parse->options & MULTIPLE_SPECIFIERS) && ch == ' ')
     {
@@ -116,7 +116,7 @@ static bool is_multiple_specifiers(int ch, parser_t *parse)
     return false;
 }
 
-static bool check_eof(int ch, parser_t *parse)
+static bool check_eof(const int ch, parser_t *parse)
 {
     bool condition = (ch == EOF);
 
@@ -219,7 +219,7 @@ static read_status_t parse_str(va_list *args, parser_t *parse)
 
 static void parse_uint(const char *str, void *arg) 
 {
-    long number = strtol(str, NULL, 10);
+    const long number = strtol(str, NULL, 10);
     unsigned int *uint_arg = (unsigned int*)arg;
 
     if (number > UINT32_MAX || number <= UINT32_MIN)
@@ -252,7 +252,7 @@ static void parse_long(const char *str, void *arg)
 
 static void parse_ushort(const char *str, void *arg) 
 {
-    long number = strtol(str, NULL, 10);
+    const long number = strtol(str, NULL, 10);
     unsigned short *ushort_arg = (unsigned short*)arg;
 
     if (number > USHRT_MAX || number <= USHRT_MIN)
@@ -267,7 +267,7 @@ static void parse_ushort(const char *str, void *arg)
 
 static void parse_short(const char *str, void *arg) 
 {
-    long number = strtol(str, NULL, 10);
+    const long number = strtol(str, NULL, 10);
     short *short_arg = (short*)arg;
 
     if (number < SHRT_MIN)
@@ -292,7 +292,7 @@ static void parse_float(const char *str, void *arg)
 
 static void parse_int(const char *str, void *arg) 
 {
-    long number = strtol(str, NULL, 10);
+    const long number = strtol(str, NULL, 10);
     int *int_arg = (int*)arg;
 
     if (number < INT32_MIN)
@@ -342,8 +342,8 @@ static read_status_t parse_types(va_list *args, parser_t *parse)
     return READ_SUCCESS;
 }
 
-static read_status_t parse_format(va_list *args, char *specifier,
-    bool multple_specifiers, int *successfully_read)
+static read_status_t parse_format(va_list *args, const char *specifier,
+    const bool multple_specifiers, int *successfully_read)
 {
     parser_t parse;
     read_status_t result = READ_FAILURE;
@@ -424,7 +424,7 @@ static read_status_t parse_format(va_list *args, char *specifier,
     return result;
 }
 
-static bool is_output_stream(FILE *stream)
+static bool is_output_stream(const FILE *stream)
 {
     if (stream == stdout || stream == stderr)
     {
