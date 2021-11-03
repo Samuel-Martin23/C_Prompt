@@ -182,6 +182,14 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
 
     input[i] = '\0';
 
+    // We could have read a non numeric char, but
+    // it should be a failure if the first index is 0.
+    if (parse && input[0] == '\0')
+    {
+        parse->status &= ~READ_NON_NUMERIC;
+        parse->status |= READ_FAILURE;
+    }
+
     check_eof(parse, ch);
 }
 
@@ -321,14 +329,8 @@ static void parse_types(va_list *args, parser_t *parse)
 
     parse_prompt(input, MAX_READ, parse, "\n", true, stdin);
 
-    if (parse->status & READ_EOF)
+    if (parse->status & (READ_EOF|READ_FAILURE))
     {
-        return;
-    }
-
-    if (input[0] == '\0')
-    {
-        parse->status |= READ_FAILURE;
         return;
     }
 
