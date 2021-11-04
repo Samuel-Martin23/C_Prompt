@@ -7,19 +7,20 @@ scanf or fgets. prompt currently supports these format specifiers:
 prompt currently does not support pattern matching.
 
 1. The buffer is flushed when using any prompt library functions.
-scanf leaves \n in the buffer, and fgets just reads a certain number
-of bytes from the buffer. So a problem could arise when
-you use scanf or fgets followed by another input function
-without clearing the buffer. Even if you do clear the buffer,
-you might need to press the enter/return key one or more times.
+scanf leaves \n in the buffer and is open to buffer overflow attacks.
+fgets just reads a certain number of bytes from the buffer.
+So a problem could arise when you use scanf or fgets
+followed by another input function without clearing the buffer.
+Even if you do clear the buffer, you might need to press
+the enter/return key one or more times.
 
-2. prompt gives you protection from arithmetic overflow. If an
-overflow happens, the strto... family will take care of it with
-additional checking for types smaller than a long.
-
-3. There is no need for explicit field width settings when using
+2. There is no need for explicit field width settings when using
 prompt for strs. If you chose to use prompt to enter a str,
 you can pass in the size of the str as an additional parameter.
+
+3. prompt gives you protection from arithmetic overflow. If an
+overflow happens, the strto... family will take care of it with
+additional checking for types smaller than a long.
 
 4. The prompt library also provides a prompt_getline
 and a prompt_getline_delim. If you use prompt to enter a str,
