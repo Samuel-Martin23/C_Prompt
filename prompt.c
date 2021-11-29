@@ -77,7 +77,7 @@ static char *alloc_str(const char *s)
 static bool is_not_numeric(parser_t *parse, int ch)
 {
     if (parse && (parse->options & NUMERICS_ONLY)
-        && !((ch >= '0' && ch <= '9') || ch == '.' || ch == '-'))
+        && !((ch >= '0' && ch <= '9') || ch == '.' || ch == '-' || ch == '+'))
     {
         parse->status |= READ_NON_NUMERIC;
         return true;
@@ -413,7 +413,7 @@ static int parse_format(va_list *args, const char *specifier,
     
     // If the user enters in a series of numbers like:
     // 12L 5 9
-    // we still want to read in '12' and also increament 
+    // we still want to read in "12" and also increament 
     // our successfully read counter. However we discard the
     // rest of the input because of the 'L' and stop reading
     // all together.
