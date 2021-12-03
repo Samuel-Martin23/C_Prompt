@@ -435,7 +435,7 @@ static bool is_output_stream(const FILE *stream)
     return false;
 }
 
-int prompt_getline_delim(const char *message, char *input,
+int prompt_getline_delim_stream(const char *message, char *input,
     const size_t MAX_STR_SIZE, const char *delim,
     bool matched_delim, FILE *stream)
 {
@@ -456,10 +456,26 @@ int prompt_getline_delim(const char *message, char *input,
     return 1;
 }
 
-int prompt_getline(const char *message, char *input,
+int prompt_getline_delim(const char *message, char *input,
+    const size_t MAX_STR_SIZE, const char *delim,
+    bool matched_delim)
+{
+    return prompt_getline_delim_stream(message, input, MAX_STR_SIZE,
+                                        delim, matched_delim, stdin);
+}
+
+int prompt_getline_stream(const char *message, char *input,
     const size_t MAX_STR_SIZE, FILE *stream)
 {
-    return prompt_getline_delim(message, input, MAX_STR_SIZE, "\n", true, stream);
+    return prompt_getline_delim_stream(message, input, MAX_STR_SIZE,
+                                        "\n", true, stream);
+}
+
+int prompt_getline(const char *message, char *input,
+    const size_t MAX_STR_SIZE)
+{
+    return prompt_getline_delim_stream(message, input, MAX_STR_SIZE,
+                                        "\n", true, stdin);
 }
 
 int prompt(const char *message, const char *format, ...)

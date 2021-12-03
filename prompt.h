@@ -36,7 +36,7 @@ exclude(true) or include(false) the delim.
 For example, if the delim is "01\n" and the matched_delim is true,
 then it will stop reading when it encounters a '0', '1', or a '\n'.
 However, if the delim was "01" and the matched_delim is false,
-then it will stop reading only when it encounters a char 
+then it will stop reading only when it encounters a char
 that is NOT a '0' or a '1'.
 
 6. The prompt functions have an additional parameter for
@@ -59,12 +59,19 @@ the code look cleaner imo.
 #include <limits.h>
 #endif
 
-int prompt_getline_delim(const char *message, char *input,
+int prompt_getline_delim_stream(const char *message, char *input,
     const size_t MAX_STR_SIZE, const char *delim,
     bool matched_delim, FILE *stream);
 
-int prompt_getline(const char *message, char *input,
+int prompt_getline_delim(const char *message, char *input,
+    const size_t MAX_STR_SIZE, const char *delim,
+    bool matched_delim);
+
+int prompt_getline_stream(const char *message, char *input,
     const size_t MAX_STR_SIZE, FILE *stream);
+
+int prompt_getline(const char *message, char *input,
+    const size_t MAX_STR_SIZE);
 
 int prompt(const char *message, const char *format, ...);
 
