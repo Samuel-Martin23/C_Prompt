@@ -9,11 +9,11 @@ int main()
     float weight = 0.0f;
     char movie[50] = {0};
 
-    prompt_getline("Enter Name: ", name, sizeof(name), stdin);
+    prompt_getline("Enter Name: ", name, sizeof(name));
     prompt("Enter favorite color: ", "%s", color, sizeof(color));
     prompt("Enter age: ", "%d", &age);
     prompt("Enter height followed by weight: ", "%f%f", &height, &weight);
-    prompt_getline_delim("Enter Movie: ", movie, sizeof(movie), "s", true, stdin);
+    prompt_getline_delim("Enter Movie: ", movie, sizeof(movie), "s", true);
 
     printf("\nName: %s\n", name);
     printf("Color: %s\n", color);
