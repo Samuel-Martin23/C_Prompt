@@ -5,7 +5,7 @@ OBJECTS := $(patsubst %.c, %.o, $(SOURCES))
 HEADERS := $(wildcard *.h)
 
 LIBRARY_NAME := prompt
-LIBRARY_SOURCES := $(filter-out main.c,$(wildcard *.c))
+LIBRARY_SOURCES := $(filter-out main.c, $(SOURCES))
 
 EXECUTABLE_NAME := program
 
