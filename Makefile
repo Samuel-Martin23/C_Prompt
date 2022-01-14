@@ -1,22 +1,23 @@
-CC = clang
-flags = -std=c17 -Wall -Wextra -Wconversion -Wunreachable-code -Wnewline-eof -Wno-error=unused-variable -Wshadow -Wfloat-equal -Wcovered-switch-default -Wunreachable-code-break
+CC := clang
+FLAGS := -std=c17 -Wall -Wextra -Wconversion -Wunreachable-code -Wnewline-eof -Wno-error=unused-variable -Wshadow -Wfloat-equal -Wcovered-switch-default -Wunreachable-code-break
+SOURCES := $(wildcard *.c)
+OBJECTS := $(patsubst %.c, %.o, $(SOURCES))
+HEADERS := $(wildcard *.h)
 
-name_of_lib = prompt
-file_to_compile = prompt
-object_files = main.o prompt.o
-name_of_executable = program
+LIBRARY_NAME := prompt
+LIBRARY_SOURCES := $(filter-out main.c,$(wildcard *.c))
 
-$(name_of_executable): $(object_files)
+EXECUTABLE_NAME := program
+
+%.o: %.c $(HEADERS)
+	$(CC) $(FLAGS) -c $< -o $@
+
+$(EXECUTABLE_NAME): $(OBJECTS)
 	$(CC) $^ -o $@
 
-main.o: main.c
-	$(CC) $(flags) -c $^ -o $@
-
-prompt.o: prompt.c prompt.h
-	$(CC) $(flags) -c prompt.c -o $@
-
 shared:
-	$(CC) -dynamiclib $(file_to_compile).c -o lib$(name_of_lib).dylib -install_name @rpath/lib$(name_of_lib).dylib
+	$(CC) $(FLAGS) -dynamiclib $(LIBRARY_SOURCES) -o lib$(LIBRARY_NAME).dylib -install_name @rpath/lib$(LIBRARY_NAME).dylib
 
 clean:
-	rm *.o $(name_of_executable)
+	rm *.o
+	rm $(EXECUTABLE_NAME)
