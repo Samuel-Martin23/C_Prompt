@@ -8,8 +8,8 @@
 // entered -65536, what should it be? So if what the user entered
 // was less than or equal to USHRT_MIN(-65536), the value will
 // be USHRT_MAX(65535). The same thing applies to UINT32_MIN.
-#define USHRT_MIN                   -((long)USHRT_MAX) - 1
-#define UINT32_MIN                  -((long)UINT32_MAX) - 1
+#define USHRT_MIN                   (-((long)USHRT_MAX) - 1)
+#define UINT32_MIN                  (-((long)UINT32_MAX) - 1)
 
 // How I determined MAX_READ.
 // https://stackoverflow.com/questions/1701055/
@@ -39,7 +39,7 @@ typedef struct parser
 typedef void (*parse_arg_t)(va_list *args, parser_t *parse);
 
 // Separates a str with a multi-character delimiter.
-static char *strsep_chars(char **data, const char *separator) 
+static char *strsep_chars(char **data, const char *separator)
 {
     if (*data == NULL)
     {
@@ -77,7 +77,8 @@ static char *alloc_str(const char *s)
 static bool is_not_numeric(parser_t *parse, int ch)
 {
     if (parse && (parse->options & NUMERICS_ONLY)
-        && !((ch >= '0' && ch <= '9') || ch == '.' || ch == '-' || ch == '+'))
+        && !((ch >= '0' && ch <= '9') || ch == '.' || ch == '-' ||
+            ch == '+'  || ch == 'e' || ch == 'E'))
     {
         parse->status |= READ_NON_NUMERIC;
         return true;
@@ -130,7 +131,7 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
     bool matched_delim, FILE *stream)
 {
     int ch = getc(stream);
-    
+
     if (check_eof(parse, ch))
     {
         return;
@@ -224,7 +225,7 @@ static void parse_str(va_list *args, parser_t *parse)
     parse->status |= READ_SUCCESS;
 }
 
-static void parse_uint(const char *str, void *arg) 
+static void parse_uint(const char *str, void *arg)
 {
     const long number = strtol(str, NULL, 10);
     unsigned int *uint_arg = (unsigned int*)arg;
@@ -239,25 +240,25 @@ static void parse_uint(const char *str, void *arg)
     }
 }
 
-static void parse_ulong(const char *str, void *arg) 
+static void parse_ulong(const char *str, void *arg)
 {
     unsigned long *ulong_arg = (unsigned long*)arg;
     *ulong_arg = strtoul(str, NULL, 10);
 }
 
-static void parse_double(const char *str, void *arg) 
+static void parse_double(const char *str, void *arg)
 {
     double *double_arg = (double*)arg;
     *double_arg = strtod(str, NULL);
 }
 
-static void parse_long(const char *str, void *arg) 
+static void parse_long(const char *str, void *arg)
 {
     long *long_arg = (long*)arg;
     *long_arg = strtol(str, NULL, 10);
 }
 
-static void parse_ushort(const char *str, void *arg) 
+static void parse_ushort(const char *str, void *arg)
 {
     const long number = strtol(str, NULL, 10);
     unsigned short *ushort_arg = (unsigned short*)arg;
@@ -272,7 +273,7 @@ static void parse_ushort(const char *str, void *arg)
     }
 }
 
-static void parse_short(const char *str, void *arg) 
+static void parse_short(const char *str, void *arg)
 {
     const long number = strtol(str, NULL, 10);
     short *short_arg = (short*)arg;
@@ -291,13 +292,13 @@ static void parse_short(const char *str, void *arg)
     }
 }
 
-static void parse_float(const char *str, void *arg) 
+static void parse_float(const char *str, void *arg)
 {
     float *float_arg = (float*)arg;
     *float_arg = strtof(str, NULL);
 }
 
-static void parse_int(const char *str, void *arg) 
+static void parse_int(const char *str, void *arg)
 {
     const long number = strtol(str, NULL, 10);
     int *int_arg = (int*)arg;
@@ -316,7 +317,7 @@ static void parse_int(const char *str, void *arg)
     }
 }
 
-static void parse_char(const char *str, void *arg) 
+static void parse_char(const char *str, void *arg)
 {
     char *char_arg = (char*)arg;
     *char_arg = str[0];
@@ -353,53 +354,56 @@ static int parse_format(va_list *args, const char *specifier,
     parse.status = READ_NONE;
     parse.options = (multple_specifiers | STOP_AT_SPACE | NUMERICS_ONLY);
 
-    if (!(strncmp(specifier, "c", MAX_FORMAT)))
+    if (!(strncasecmp(specifier, "c", MAX_FORMAT)))
     {
         parse.options &= ~NUMERICS_ONLY;
         parse.get_arg = va_arg_char;
         parse.assign_to_arg = parse_char;
     }
-    else if (!(strncmp(specifier, "d", MAX_FORMAT)))
+    else if (!(strncasecmp(specifier, "d", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_int;
         parse.assign_to_arg = parse_int;
     }
-    else if (!(strncmp(specifier, "f", MAX_FORMAT)))
+    else if (!(strncasecmp(specifier, "f", MAX_FORMAT)) 
+            || !(strncasecmp(specifier, "a", MAX_FORMAT))
+            || !(strncasecmp(specifier, "e", MAX_FORMAT))
+            || !(strncasecmp(specifier, "g", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_float;
         parse.assign_to_arg = parse_float;
     }
-    else if (!(strncmp(specifier, "hi", MAX_FORMAT)))
+    else if (!(strncasecmp(specifier, "hi", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_short;
         parse.assign_to_arg = parse_short;
     }
-    else if (!(strncmp(specifier, "hu", MAX_FORMAT)))
+    else if (!(strncasecmp(specifier, "hu", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_ushort;
         parse.assign_to_arg = parse_ushort;
     }
-    else if (!(strncmp(specifier, "ld", MAX_FORMAT)))
+    else if (!(strncasecmp(specifier, "ld", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_long;
         parse.assign_to_arg = parse_long;
     }
-    else if (!(strncmp(specifier, "lf", MAX_FORMAT)))
+    else if (!(strncasecmp(specifier, "lf", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_double;
         parse.assign_to_arg = parse_double;
     }
-    else if (!(strncmp(specifier, "lu", MAX_FORMAT)))
+    else if (!(strncasecmp(specifier, "lu", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_ulong;
         parse.assign_to_arg = parse_ulong;
     }
-    else if (!(strncmp(specifier, "u", MAX_FORMAT)))
+    else if (!(strncasecmp(specifier, "u", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_uint;
         parse.assign_to_arg = parse_uint;
     }
-    else if (!(strncmp(specifier, "s", MAX_FORMAT)))
+    else if (!(strncasecmp(specifier, "s", MAX_FORMAT)))
     {
         parse.options &= ~NUMERICS_ONLY;
         read_in_arg = parse_str;
@@ -410,7 +414,7 @@ static int parse_format(va_list *args, const char *specifier,
     }
 
     read_in_arg(args, &parse);
-    
+
     // If the user enters in a series of numbers like:
     // 12L 5 9
     // we still want to read in "12" and also increament 
