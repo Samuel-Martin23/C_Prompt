@@ -3,8 +3,16 @@
 !*/
 !**/Makefile
 
+# Mac Stuff
 .vscode/
 *.DS_Store
 *.o
 *.dylib
 *.a
+
+# Windwos Stuff
+.vs/
+Debug/
+*.sln
+*.vcxproj
+*.vcxproj.*
