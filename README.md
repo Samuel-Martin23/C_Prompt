@@ -73,7 +73,7 @@ then it will stop reading when it encounters a '0', '1', or a '\n'.
 printing out your message to the user instead of calling printf
 before you use an input function.
 
-### Format specifiers supported by the prompt library:
+### Format specifiers supported by the prompt function:
 Format Specifier  | Data Type
 ------------- | -------------
 %c  | char

@@ -44,7 +44,7 @@ that is NOT a '0' or a '1'.
 printing out your message to the user instead of calling printf
 before you use an input function.
 
-Format specifiers supported by the prompt library:
+Format specifiers supported by the prompt function:
 Format Specifier | Data Type
 %c  | char
 %d  | int
