@@ -65,8 +65,8 @@ then it will stop reading when it encounters a '0', '1', or a '\n'.
 	then it will stop reading only when it encounters a char that is NOT a '0' or a '1'.
 	```c
 	char bi_num[50] = "";
-	prompt("Enter binary number: ", bi_num, 50, "01", false);   // 1012010 
-	printf("Your binary number is %s", bi_num);                 // Your binary number is 101
+	prompt_getline_delim("Enter binary number: ", bi_num, 50, "01", false);		// 1012010 
+	printf("Your binary number is %s", bi_num);                 			// Your binary number is 101
 	```
 
 6. The prompt functions have an additional parameter for
