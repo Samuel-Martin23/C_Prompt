@@ -22,8 +22,8 @@ you can pass in the size of the str as an additional parameter.
 overflow happens, the strto... family will take care of it with
 additional checking for types smaller than a long.
 
-4. The prompt library also provides a prompt_getline
-and a prompt_getline_delim. If you use prompt to enter a str,
+4. The prompt library also provides prompt_getline
+and prompt_getline_delim. If you use prompt to enter a str,
 it will stop reading when it encounters a space. Using prompt_getline
 or prompt_getline_delim will solve this issue.
 
@@ -35,7 +35,7 @@ the delim does not matter. matched_delim is a bool that will
 exclude(true) or include(false) the delim.
 For example, if the delim is "01\n" and the matched_delim is true,
 then it will stop reading when it encounters a '0', '1', or a '\n'.
-However, if the delim was "01" and the matched_delim is false,
+However, if the delim is "01" and the matched_delim is false,
 then it will stop reading only when it encounters a char
 that is NOT a '0' or a '1'.
 
