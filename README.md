@@ -2,10 +2,10 @@
 The prompt library provides a clean and easy way
 to get input from the user. There are many advantages
 to using the prompt library compared to other means such as
-scanf or fgets. prompt currently supports these format specifiers:
-%c, %d, %f, %hi, %hu, %ld, %lf, %lu, %s, and %u.
-prompt currently does not support pattern matching.
+scanf or fgets.
+(prompt currently does not support pattern matching.)
 
+#### Advantages of the prompt library:
 1. The buffer is flushed when using any prompt library functions.
 scanf leaves \n in the buffer and is open to buffer overflow attacks.
 fgets just reads a certain number of bytes from the buffer.
@@ -41,5 +41,18 @@ that is NOT a '0' or a '1'.
 
 6. The prompt functions have an additional parameter for
 printing out your message to the user instead of calling printf
-before you use an input function. It just makes
-the code look cleaner imo.
+before you use an input function.
+
+#### Format specifiers supported by the prompt library:
+Format Specifier  | Data Type
+------------- | -------------
+%c  | char
+%d  | int
+%f  | float
+%hi  | short
+%hu  | unsigned short
+%ld  | long
+%lf  | double
+%lu  | unsigned long
+%s  | strings
+%u | unsigned int

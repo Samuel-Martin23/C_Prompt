@@ -354,56 +354,53 @@ static int parse_format(va_list *args, const char *specifier,
     parse.status = READ_NONE;
     parse.options = (multple_specifiers | STOP_AT_SPACE | NUMERICS_ONLY);
 
-    if (!(strncasecmp(specifier, "c", MAX_FORMAT)))
+    if (!(strncmp(specifier, "c", MAX_FORMAT)))
     {
         parse.options &= ~NUMERICS_ONLY;
         parse.get_arg = va_arg_char;
         parse.assign_to_arg = parse_char;
     }
-    else if (!(strncasecmp(specifier, "d", MAX_FORMAT)))
+    else if (!(strncmp(specifier, "d", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_int;
         parse.assign_to_arg = parse_int;
     }
-    else if (!(strncasecmp(specifier, "f", MAX_FORMAT)) 
-            || !(strncasecmp(specifier, "a", MAX_FORMAT))
-            || !(strncasecmp(specifier, "e", MAX_FORMAT))
-            || !(strncasecmp(specifier, "g", MAX_FORMAT)))
+    else if (!(strncmp(specifier, "f", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_float;
         parse.assign_to_arg = parse_float;
     }
-    else if (!(strncasecmp(specifier, "hi", MAX_FORMAT)))
+    else if (!(strncmp(specifier, "hi", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_short;
         parse.assign_to_arg = parse_short;
     }
-    else if (!(strncasecmp(specifier, "hu", MAX_FORMAT)))
+    else if (!(strncmp(specifier, "hu", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_ushort;
         parse.assign_to_arg = parse_ushort;
     }
-    else if (!(strncasecmp(specifier, "ld", MAX_FORMAT)))
+    else if (!(strncmp(specifier, "ld", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_long;
         parse.assign_to_arg = parse_long;
     }
-    else if (!(strncasecmp(specifier, "lf", MAX_FORMAT)))
+    else if (!(strncmp(specifier, "lf", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_double;
         parse.assign_to_arg = parse_double;
     }
-    else if (!(strncasecmp(specifier, "lu", MAX_FORMAT)))
+    else if (!(strncmp(specifier, "lu", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_ulong;
         parse.assign_to_arg = parse_ulong;
     }
-    else if (!(strncasecmp(specifier, "u", MAX_FORMAT)))
+    else if (!(strncmp(specifier, "u", MAX_FORMAT)))
     {
         parse.get_arg = va_arg_uint;
         parse.assign_to_arg = parse_uint;
     }
-    else if (!(strncasecmp(specifier, "s", MAX_FORMAT)))
+    else if (!(strncmp(specifier, "s", MAX_FORMAT)))
     {
         parse.options &= ~NUMERICS_ONLY;
         read_in_arg = parse_str;
