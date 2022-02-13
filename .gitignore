@@ -10,7 +10,7 @@
 *.dylib
 *.a
 
-# Windwos Stuff
+# Windows Stuff
 .vs/
 Debug/
 *.sln

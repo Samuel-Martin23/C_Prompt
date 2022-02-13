@@ -15,23 +15,24 @@ Even if you do clear the buffer, you might need to press
 the enter/return key one or more times.
 
 2. There is no need for explicit field width settings when using
-prompt for strs. If you chose to use prompt to enter a str,
+prompt for strs. If you choose to use prompt to enter a str,
 you can pass in the size of the str as an additional parameter.
 
 3. prompt gives you protection from arithmetic overflow. If an
 overflow happens, the strto... family will take care of it with
 additional checking for types smaller than a long.
 
-4. The prompt library also provides prompt_getline
-and prompt_getline_delim. If you use prompt to enter a str,
-it will stop reading when it encounters a space. Using prompt_getline
-or prompt_getline_delim will solve this issue.
+4. The prompt library also provides prompt_getline,
+prompt_getline_stream, prompt_getline_delim,
+and prompt_getline_delim_stream. If you use prompt
+to enter a str, it will stop reading when it encounters a space.
+Using prompt_getline will solve this issue.
 
 5. prompt_getline_delim has some interesting features.
 prompt_getline_delim takes two additional parameters,
-a delim, and matched_delim. delim is a char* as
+a delim, and a matched_delim. delim is a const char* as
 I wanted a way for the user to pass in multiple delims. The order of
-the delim does not matter. matched_delim is a bool that will
+the delim(s) does not matter. matched_delim is a bool that will
 exclude(true) or include(false) the delim.
 For example, if the delim is "01\n" and the matched_delim is true,
 then it will stop reading when it encounters a '0', '1', or a '\n'.
