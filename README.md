@@ -7,7 +7,7 @@ to using the prompt library compared to other means such as
 
 ### Advantages of the prompt library:
 1. The buffer is flushed when using any prompt library functions.
-scanf leaves \n in the buffer and is open to buffer overflow attacks.
+scanf leaves '\n' in the buffer and is open to buffer overflow attacks.
 fgets just reads a certain number of bytes from the buffer.
 So a problem could arise when you use scanf or fgets
 followed by another input function without clearing the buffer.
@@ -16,7 +16,7 @@ the enter/return key one or more times.
 
 2. There is no need for explicit field width settings when using
 prompt for strs. If you chose to use prompt to enter a str,
-you can pass in the size of the str as an additional parameter.
+you must pass in the size of the str as an additional parameter.
 	```c
 	char name[50] = "";
 	prompt("Enter name: ", "%s", name, 50);
@@ -47,15 +47,28 @@ to enter a str, it will stop reading when it encounters a space.
 	prompt_getline("Enter name: ", name, 50);	// Samuel Martin
 	printf("Your name is %s", name);		// Your name is Samuel Martin
 	```
+	
+	You can also read files using prompt_getline_stream or prompt_getline_delim_stream.
+	```c
+	char line[1000] = "";
+	FILE *fp = fopen("file.txt", "r");
+	
+	while (prompt_getline_stream("", line, 1000, fp) == 1)
+	{
+	    printf("%s\n", line);
+	}
+
+	fclose(fp);
+	```
 
 5. prompt_getline_delim has some interesting features.
 prompt_getline_delim takes two additional parameters,
 a delim, and a matched_delim. delim is a const char* as
-I wanted a way for the user to pass in multiple delims. The order of
-the delim(s) does not matter. matched_delim is a bool that will
+a way for the user to pass in multiple delims. The order of
+the delims does not matter. matched_delim is a bool that will
 exclude(true) or include(false) the delim.
 For example, if the delim is "01\n" and the matched_delim is true,
-then it will stop reading when it encounters a '0', '1', or a '\n'.
+then it will stop reading when it encounters a '0', a '1', or a '\n'.
 	```c
 	char exper[50] = "";
 	prompt_getline_delim("Enter experiment: ", exper, 50, "01\n", true);	// Test 23123
