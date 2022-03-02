@@ -27,6 +27,8 @@ prompt_getline_stream, prompt_getline_delim,
 and prompt_getline_delim_stream. If you use prompt
 to enter a str, it will stop reading when it encounters a space.
 Using prompt_getline will solve this issue.
+You can also read files using prompt_getline_stream
+or prompt_getline_delim_stream.
 
 5. prompt_getline_delim has some interesting features.
 prompt_getline_delim takes two additional parameters,
