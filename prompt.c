@@ -157,6 +157,9 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
             break;
         }
 
+        // I can't remember why is_strchr has to go first.
+        // I think it caused some bug, but I don't remember
+        // what bug or how to replicate it.
         if (is_strchr(delim, ch) == matched_delim
             || is_space(parse, ch)
             || is_non_numeric(parse, ch))
