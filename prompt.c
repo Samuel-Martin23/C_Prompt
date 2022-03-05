@@ -74,7 +74,7 @@ static char *alloc_str(const char *s)
     return str;
 }
 
-static bool is_not_numeric(parser_t *parse, int ch)
+static bool is_non_numeric(parser_t *parse, int ch)
 {
     if (parse && (parse->options & NUMERICS_ONLY)
         && !((ch >= '0' && ch <= '9') || ch == '.' || ch == '-' ||
@@ -140,8 +140,8 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
     size_t i = 0;
     const size_t LAST_INDEX = MAX_SIZE - 1;
 
-    // If you are not using a getline function,
-    // we don't want to read any newlines or spaces first.
+    // If you are only using the prompt function,
+    // we do not want you to read any newlines or spaces first.
     if (parse)
     {
         while (ch == '\n' || ch == ' ')
@@ -159,8 +159,10 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
 
         if (is_strchr(delim, ch) == matched_delim
             || is_space(parse, ch)
-            || is_not_numeric(parse, ch))
+            || is_non_numeric(parse, ch))
         {
+            // Clear only the input buffer. We do not want 
+            // to clear any file buffers.
             if (stream == stdin)
             {
                 // Clearing the buffer.
@@ -173,6 +175,9 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
             break;
         }
 
+        // Even if we reach the MAX_SIZE we should
+        // not clear the input buffer as there could be
+        // multiple specifiers.
         if (i != LAST_INDEX)
         {
             input[i++] = (char)ch;
