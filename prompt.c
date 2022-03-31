@@ -112,18 +112,6 @@ static bool is_multiple_specifiers(parser_t *parse, int ch)
     return false;
 }
 
-static bool check_eof(parser_t *parse, int ch)
-{
-    bool condition = (ch == EOF);
-
-    if (parse && condition)
-    {
-        parse->status |= READ_EOF;
-    }
-
-    return condition;
-}
-
 // This function was inspired by this video:
 // https://youtu.be/NsB6dqvVu7Y?t=231
 static void parse_prompt(char *input, const size_t MAX_SIZE,
@@ -131,12 +119,6 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
     bool matched_delim, FILE *stream)
 {
     int ch = getc(stream);
-
-    if (check_eof(parse, ch))
-    {
-        return;
-    }
-
     size_t i = 0;
     const size_t LAST_INDEX = MAX_SIZE - 1;
 
@@ -199,7 +181,11 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
         parse->status |= READ_FAILURE;
     }
 
-    check_eof(parse, ch);
+    // It still could be a failure and the eof.
+    if (parse && ch == EOF)
+    {
+        parse->status |= READ_EOF;
+    }
 }
 
 static void *va_arg_uint(va_list *args) {return (void*)va_arg(*args, unsigned int*);}
