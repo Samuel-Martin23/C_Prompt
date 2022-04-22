@@ -89,12 +89,7 @@ static bool is_non_numeric(parser_t *parse, int ch)
 
 static bool is_space(parser_t *parse, int ch)
 {
-    if (parse && (parse->options & STOP_AT_SPACE) && ch == ' ')
-    {
-        return true;
-    }
-
-    return false;
+    return (parse && (parse->options & STOP_AT_SPACE) && ch == ' ');
 }
 
 static bool is_strchr(const char *s, int c)
@@ -104,12 +99,7 @@ static bool is_strchr(const char *s, int c)
 
 static bool is_multiple_specifiers(parser_t *parse, int ch)
 {
-    if (parse && (parse->options & MULTIPLE_SPECIFIERS) && ch == ' ')
-    {
-        return true;
-    }
-
-    return false;
+    return (parse && (parse->options & MULTIPLE_SPECIFIERS) && ch == ' ');
 }
 
 // This function was inspired by this video:
