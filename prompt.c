@@ -410,21 +410,11 @@ static int parse_format(va_list *args, const char *specifier,
     return parse.status;
 }
 
-static bool is_output_stream(const FILE *stream)
-{
-    if (stream == stdout || stream == stderr)
-    {
-        return true;
-    }
-
-    return false;
-}
-
 int prompt_getline_delim_stream(const char *message, char *input,
     const size_t MAX_STR_SIZE, const char *delim,
     bool matched_delim, FILE *stream)
 {
-    if (MAX_STR_SIZE == 0 || is_output_stream(stream))
+    if (MAX_STR_SIZE == 0 || stream == stdout || stream == stderr)
     {
         return 0;
     }

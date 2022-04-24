@@ -6,9 +6,11 @@ scanf or fgets.
 (prompt currently does not support pattern matching.)
 
 Advantages of the prompt library:
-1. The buffer is flushed when using any prompt library functions.
-scanf leaves \n in the buffer and is open to buffer overflow attacks.
-fgets just reads a certain number of bytes from the buffer.
+1. When using any prompt library functions, the input buffer is flushed
+and a '\n' is NOT added at the very end of an input string.
+scanf leaves a '\n' in the buffer and is open to buffer overflow attacks.
+fgets just reads a certain number of bytes from the buffer and includes
+a '\n' at the very end of the input string.
 So a problem could arise when you use scanf or fgets
 followed by another input function without clearing the buffer.
 Even if you do clear the buffer, you might need to press
