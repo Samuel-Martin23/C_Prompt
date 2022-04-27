@@ -70,10 +70,10 @@ Format Specifier | Data Type
 #include <stdbool.h>
 #include <string.h>
 #include <stdarg.h>
-#ifdef _WIN32
-#include <stdint.h>
-#else
+#ifdef __APPLE__
 #include <limits.h>
+#else
+#include <stdint.h>
 #endif
 
 int prompt_getline_delim_stream(const char *message, char *input,
