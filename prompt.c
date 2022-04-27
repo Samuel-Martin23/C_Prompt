@@ -80,7 +80,7 @@ static bool is_non_numeric(parser_t *parse, int ch)
         && !((ch >= '0' && ch <= '9') || ch == '.' || ch == '-' ||
             ch == '+'  || ch == 'e' || ch == 'E'))
     {
-        parse->status |= READ_NON_NUMERIC;
+        parse->status = READ_NON_NUMERIC;
         return true;
     }
 
@@ -163,18 +163,16 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
 
     input[i] = '\0';
 
-    // We could have read a non numeric char, but
-    // it should be a failure if the first index is 0.
+    // It should be a failure if the first index is 0.
     if (parse && input[0] == '\0')
     {
-        parse->status &= ~READ_NON_NUMERIC;
-        parse->status |= READ_FAILURE;
+        parse->status = READ_FAILURE;
     }
 
-    // It still could be a failure and the eof.
+    // It could be the eof.
     if (parse && ch == EOF)
     {
-        parse->status |= READ_EOF;
+        parse->status = READ_EOF;
     }
 }
 
@@ -195,18 +193,18 @@ static void parse_str(va_list *args, parser_t *parse)
 
     if (MAX_STR_SIZE == 0)
     {
-        parse->status |= READ_FAILURE;
+        parse->status = READ_FAILURE;
         return;
     }
 
     parse_prompt(input, MAX_STR_SIZE, parse, "\n", true, stdin);
 
-    if (parse->status & READ_EOF)
+    if (parse->status == READ_EOF)
     {
         return;
     }
 
-    parse->status |= READ_SUCCESS;
+    parse->status = READ_SUCCESS;
 }
 
 static void parse_uint(const char *str, void *arg)
@@ -321,12 +319,12 @@ static void parse_types(va_list *args, parser_t *parse)
 
     parse->assign_to_arg(input, arg_value);
 
-    if (parse->status & READ_NON_NUMERIC)
+    if (parse->status == READ_NON_NUMERIC)
     {
         return;
     }
 
-    parse->status |= READ_SUCCESS;
+    parse->status = READ_SUCCESS;
 }
 
 static int parse_format(va_list *args, const char *specifier,
@@ -472,7 +470,7 @@ int prompt(const char *message, const char *format, ...)
         result = parse_format(&args, specifier,
                     (format_copy != NULL), &successfully_read);
 
-        if (!(result & READ_SUCCESS))
+        if (result != READ_SUCCESS)
         {
             break;
         }
@@ -481,5 +479,5 @@ int prompt(const char *message, const char *format, ...)
     va_end(args);
     free(format_alloc);
 
-    return (result & READ_EOF) ? EOF : successfully_read;
+    return (result == READ_EOF) ? EOF : successfully_read;
 }
