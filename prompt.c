@@ -122,13 +122,8 @@ static void parse_prompt(char *input, const size_t MAX_SIZE,
         }
     }
 
-    while (true)
+    while (ch != EOF && !(is_multiple_specifiers(parse, ch)))
     {
-        if (ch == EOF || is_multiple_specifiers(parse, ch))
-        {
-            break;
-        }
-
         // I can't remember why is_strchr has to go first.
         // I think it caused some bug, but I don't remember
         // what bug or how to replicate it.
