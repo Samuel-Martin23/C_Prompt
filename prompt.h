@@ -24,16 +24,16 @@ you can pass in the size of the str as an additional parameter.
 overflow happens, the strto... family will take care of it with
 additional checking for types smaller than a long.
 
-4. The prompt library also provides prompt_getline,
-prompt_getline_stream, prompt_getline_delim,
-and prompt_getline_delim_stream. If you use prompt
+4. The prompt library also provides prompt_gets,
+prompt_gets_stream, prompt_gets_delim,
+and prompt_gets_delim_stream. If you use prompt
 to enter a str, it will stop reading when it encounters a space.
-Using prompt_getline will solve this issue.
-You can also read files using prompt_getline_stream
-or prompt_getline_delim_stream.
+Using prompt_gets will solve this issue.
+You can also read files using prompt_gets_stream
+or prompt_gets_delim_stream.
 
-5. prompt_getline_delim has some interesting features.
-prompt_getline_delim takes two additional parameters,
+5. prompt_gets_delim has some interesting features.
+prompt_gets_delim takes two additional parameters,
 a delim, and a matched_delim. delim is a const char* as
 I wanted a way for the user to pass in multiple delims. The order of
 the delim(s) does not matter. matched_delim is a bool that will
@@ -65,29 +65,28 @@ Format Specifier | Data Type
 #ifndef PROMPT_H
 #define PROMPT_H
 
+#ifdef __clang__
+#include <limits.h>
+#endif
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
-#include <stdarg.h>
-#ifdef __APPLE__
-#include <limits.h>
-#else
-#include <stdint.h>
-#endif
 
-int prompt_getline_delim_stream(const char *message, char *input,
+int prompt_gets_delim_stream(const char *message, char *input,
     const size_t MAX_STR_SIZE, const char *delim,
     bool matched_delim, FILE *stream);
 
-int prompt_getline_delim(const char *message, char *input,
+int prompt_gets_delim(const char *message, char *input,
     const size_t MAX_STR_SIZE, const char *delim,
     bool matched_delim);
 
-int prompt_getline_stream(const char *message, char *input,
+int prompt_gets_stream(const char *message, char *input,
     const size_t MAX_STR_SIZE, FILE *stream);
 
-int prompt_getline(const char *message, char *input,
+int prompt_gets(const char *message, char *input,
     const size_t MAX_STR_SIZE);
 
 int prompt(const char *message, const char *format, ...);

@@ -403,7 +403,7 @@ static int parse_format(va_list *args, const char *specifier,
     return parse.status;
 }
 
-int prompt_getline_delim_stream(const char *message, char *input,
+int prompt_gets_delim_stream(const char *message, char *input,
     const size_t MAX_STR_SIZE, const char *delim,
     bool matched_delim, FILE *stream)
 {
@@ -424,25 +424,25 @@ int prompt_getline_delim_stream(const char *message, char *input,
     return 1;
 }
 
-int prompt_getline_delim(const char *message, char *input,
+int prompt_gets_delim(const char *message, char *input,
     const size_t MAX_STR_SIZE, const char *delim,
     bool matched_delim)
 {
-    return prompt_getline_delim_stream(message, input, MAX_STR_SIZE,
+    return prompt_gets_delim_stream(message, input, MAX_STR_SIZE,
                                         delim, matched_delim, stdin);
 }
 
-int prompt_getline_stream(const char *message, char *input,
+int prompt_gets_stream(const char *message, char *input,
     const size_t MAX_STR_SIZE, FILE *stream)
 {
-    return prompt_getline_delim_stream(message, input, MAX_STR_SIZE,
+    return prompt_gets_delim_stream(message, input, MAX_STR_SIZE,
                                         "\n", true, stream);
 }
 
-int prompt_getline(const char *message, char *input,
+int prompt_gets(const char *message, char *input,
     const size_t MAX_STR_SIZE)
 {
-    return prompt_getline_delim_stream(message, input, MAX_STR_SIZE,
+    return prompt_gets_delim_stream(message, input, MAX_STR_SIZE,
                                         "\n", true, stdin);
 }
 

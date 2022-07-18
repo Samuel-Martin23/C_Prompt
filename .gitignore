@@ -2,6 +2,7 @@
 !*.*
 !*/
 !**/Makefile
+build/
 
 # Mac Stuff
 .vscode/
