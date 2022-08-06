@@ -3,6 +3,11 @@ project(C_Prompt)
 
 if (${CMAKE_C_COMPILER_ID} MATCHES "Clang")
     set(FLAGS "-std=c17 -Wall -Wextra -Wconversion -Wunreachable-code -Wnewline-eof -Wno-error=unused-variable -Wshadow -Wfloat-equal -Wcovered-switch-default -Wunreachable-code-break")
+
+    if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
+        set(FLAGS "${FLAGS} -g")
+    endif()
+
     set(CMAKE_C_FLAGS ${FLAGS})
 endif()
 
