@@ -55,7 +55,7 @@ to enter a str, it will stop reading when it encounters a space.
 	char line[1000] = "";
 	FILE *fp = fopen("file.txt", "r");
 	
-	while (prompt_gets_stream("", line, 1000, fp) == 1)
+	while (prompt_gets_stream(line, 1000, fp) == 1)
 	{
 	    printf("%s\n", line);
 	}

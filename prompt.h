@@ -75,20 +75,22 @@ Format Specifier | Data Type
 #include <stdlib.h>
 #include <string.h>
 
-int prompt_gets_delim_stream(const char *message, char *input,
-    const size_t MAX_STR_SIZE, const char *delim,
-    bool matched_delim, FILE *stream);
+int prompt(const char *message, const char *format, ...);
+
+int prompt_gets(const char *message, char *input, const size_t BUFFER_SIZE);
 
 int prompt_gets_delim(const char *message, char *input,
-    const size_t MAX_STR_SIZE, const char *delim,
-    bool matched_delim);
+                      const size_t BUFFER_SIZE, const char *delim,
+                      bool matched_delim);
 
-int prompt_gets_stream(const char *message, char *input,
-    const size_t MAX_STR_SIZE, FILE *stream);
+int prompt_gets_stream(char *input, const size_t BUFFER_SIZE, FILE *stream);
 
-int prompt_gets(const char *message, char *input,
-    const size_t MAX_STR_SIZE);
+int prompt_gets_delim_stream(char *input, const size_t BUFFER_SIZE,
+                             const char *delim, bool matched_delim,
+                             FILE *stream);
 
-int prompt(const char *message, const char *format, ...);
+char *prompt_getline_alloc(const char *message);
+
+char *prompt_getline_stream_alloc(FILE *stream);
 
 #endif /* PROMPT_H */
