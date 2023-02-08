@@ -91,6 +91,12 @@ int prompt_gets_delim_stream(char *input, const size_t BUFFER_SIZE,
 
 int prompt_getline(const char *message, char **input);
 
+int prompt_getline_delim(const char *message, char **input, const char *delim,
+                         bool matched_delim);
+
 int prompt_getline_stream(char **input, FILE *stream);
+
+int prompt_getline_delim_stream(char **input, const char *delim,
+                                bool matched_delim, FILE *stream);
 
 #endif /* PROMPT_H */

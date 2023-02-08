@@ -83,6 +83,12 @@ int prompt(const char *message, const char *format, ...)
     int result = READ_NONE;
     int successfully_read = 0;
     char *format_alloc = str_alloc(format);
+
+    if (format_alloc == NULL)
+    {
+        return 0;
+    }
+
     char *format_copy = format_alloc;
     char *specifier = strsep_chars(&format_copy, "%");
 
@@ -149,10 +155,23 @@ int prompt_gets_delim_stream(char *input, const size_t BUFFER_SIZE,
 int prompt_getline(const char *message, char **input)
 {
     printf("%s", message);
-    return prompt_getline_stream(input, stdin);
+    return prompt_getline_delim_stream(input, "\n", true, stdin);
+}
+
+int prompt_getline_delim(const char *message, char **input, const char *delim,
+                         bool matched_delim)
+{
+    printf("%s", message);
+    return prompt_getline_delim_stream(input, delim, matched_delim, stdin);
 }
 
 int prompt_getline_stream(char **input, FILE *stream)
+{
+    return prompt_getline_delim_stream(input, "\n", true, stream);
+}
+
+int prompt_getline_delim_stream(char **input, const char *delim,
+                                bool matched_delim, FILE *stream)
 {
     if (input == NULL || stream == NULL || stream == stderr || stream == stdout)
     {
@@ -175,8 +194,24 @@ int prompt_getline_stream(char **input, FILE *stream)
     }
 
     // FIXME: Add support for delim.
-    while (ch != EOF && ch != '\n')
+    while (ch != EOF)
     {
+        if (is_strchr(delim, ch) == matched_delim)
+        {
+            // Clear only the input buffer. We do not want 
+            // to clear any file buffers.
+            if (stream == stdin)
+            {
+                // Clearing the buffer.
+                while (ch != '\n' && ch != EOF)
+                {
+                    ch = getc(stream);
+                }
+            }
+
+            break;
+        }
+    
         if (i == capacity)
         {
             // FIXME: Check wrap around.
