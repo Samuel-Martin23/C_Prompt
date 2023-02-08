@@ -69,10 +69,16 @@ static bool is_multiple_specifiers(ArgumentType *arg_type, int ch);
 static bool is_strchr(const char *s, int ch);
 static bool is_space(ArgumentType *arg_type, int ch);
 static bool is_non_numeric(ArgumentType *arg_type, int ch);
+static size_t calculate_capacity(size_t capacity);
 
 int prompt(const char *message, const char *format, ...)
 {
     printf("%s", message);
+
+    if (format == NULL)
+    {
+        return 0;
+    }
 
     int result = READ_NONE;
     int successfully_read = 0;
@@ -124,7 +130,8 @@ int prompt_gets_delim_stream(char *input, const size_t BUFFER_SIZE,
                              const char *delim, bool matched_delim,
                              FILE *stream)
 {
-    if (BUFFER_SIZE == 0 || stream == stdout || stream == stderr)
+    if (input == NULL || BUFFER_SIZE == 0 || delim == NULL
+        || stream == NULL || stream == stderr || stream == stdout)
     {
         return 0;
     }
@@ -139,40 +146,62 @@ int prompt_gets_delim_stream(char *input, const size_t BUFFER_SIZE,
     return 1;
 }
 
-// FIXME: Make input pass by ref.
-char *prompt_getline_alloc(const char *message)
+int prompt_getline(const char *message, char **input)
 {
     printf("%s", message);
-    return prompt_getline_stream_alloc(stdin);
+    return prompt_getline_stream(input, stdin);
 }
 
-char *prompt_getline_stream_alloc(FILE *stream)
+int prompt_getline_stream(char **input, FILE *stream)
 {
+    if (input == NULL || stream == NULL || stream == stderr || stream == stdout)
+    {
+        return 0;
+    }
+
+    if (feof(stream))
+    {
+        return EOF;
+    }
+
     size_t i = 0;
     size_t capacity = 8;
     int ch = getc(stream);
-    // FIXME: Check malloc
-    char *input = malloc(sizeof(char) * (capacity + 1));
+    *input = malloc(sizeof(char) * (capacity + 1));
+
+    if (*input == NULL)
+    {
+        return 0;
+    }
 
     // FIXME: Add support for delim.
     while (ch != EOF && ch != '\n')
     {
         if (i == capacity)
         {
-            capacity *= 2;
-            // FIXME: Check realloc
-            input = realloc(input, capacity + 1);
+            // FIXME: Check wrap around.
+            capacity = calculate_capacity(capacity + 1);
+            char *new_input = realloc(*input, capacity + 1);
+
+            if (new_input == NULL)
+            {
+                (*input)[i] = '\0';
+
+                return 0;
+            }
+
+            *input = new_input;
         }
 
-        input[i] = (char)ch;
+        (*input)[i] = (char)ch;
         i++;
 
         ch = getc(stream);
     }
 
-    input[i] = '\0';
+    (*input)[i] = '\0';
 
-    return input;
+    return 1;
 }
 
 static char *str_alloc(const char *s)
@@ -332,7 +361,7 @@ static void *va_arg_int(va_list *args)
 
 static void parse_int(void *arg, const char *str)
 {
-    const long number = strtol(str, NULL, 10);
+    long number = strtol(str, NULL, 10);
     int *int_arg = (int*)arg;
 
     if (number < INT32_MIN)
@@ -460,15 +489,15 @@ static void parse_uint(void *arg, const char *str)
 static void parse_str(ArgumentType *arg_type, va_list *args)
 {
     char *input = va_arg(*args, char*);
-    const size_t MAX_STR_SIZE = va_arg(*args, size_t);
+    const size_t BUFFER_SIZE = va_arg(*args, size_t);
 
-    if (MAX_STR_SIZE == 0)
+    if (BUFFER_SIZE == 0)
     {
         arg_type->status = READ_FAILURE;
         return;
     }
 
-    parse_prompt(input, MAX_STR_SIZE, arg_type, "\n", true, stdin);
+    parse_prompt(input, BUFFER_SIZE, arg_type, "\n", true, stdin);
 
     if (arg_type->status == READ_EOF)
     {
@@ -520,7 +549,7 @@ static void parse_prompt(char *input, const size_t BUFFER_SIZE, ArgumentType *ar
             break;
         }
 
-        // Even if we reach the MAX_SIZE we should
+        // Even if we reach the BUFFER_SIZE we should
         // not clear the input buffer as there could be
         // multiple specifiers.
         if (i != LAST_INDEX)
@@ -574,3 +603,9 @@ static bool is_non_numeric(ArgumentType *arg_type, int ch)
 
     return false;
 }
+
+static size_t calculate_capacity(size_t capacity)
+{
+    return ((capacity >> 3) + (capacity < 9 ? 3 : 6)) + capacity;
+}
+
