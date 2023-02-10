@@ -173,7 +173,8 @@ int prompt_getline_stream(char **input, FILE *stream)
 int prompt_getline_delim_stream(char **input, const char *delim,
                                 bool matched_delim, FILE *stream)
 {
-    if (input == NULL || stream == NULL || stream == stderr || stream == stdout)
+    if (input == NULL || delim == NULL || stream == NULL
+        || stream == stderr || stream == stdout)
     {
         return 0;
     }
